@@ -1,0 +1,259 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado ─────────────────────────────────────────────────────────── #}
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Módulo académico</p>
+    <h1 class="mt-1 text-2xl font-bold text-gray-900">Métricas académicas</h1>
+  </div>
+
+  {# ── Filtros ─────────────────────────────────────────────────────────────── #}
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <form method="get" class="flex flex-wrap items-end gap-3">
+
+      <div class="flex flex-col gap-1 min-w-[140px]">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Período</label>
+        <select name="period"
+                class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800
+                       focus:border-[#5454E9] focus:outline-none focus:ring-2 focus:ring-[#5454E9]/20 transition">
+          <option value="">Todos</option>
+          <option value="diario"  {% if selected_period == 'diario'  %}selected{% endif %}>Diario</option>
+          <option value="semanal" {% if selected_period == 'semanal' %}selected{% endif %}>Semanal</option>
+          <option value="mensual" {% if selected_period == 'mensual' %}selected{% endif %}>Mensual</option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1 min-w-[140px]">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sala</label>
+        <select name="room"
+                class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800
+                       focus:border-[#5454E9] focus:outline-none focus:ring-2 focus:ring-[#5454E9]/20 transition">
+          <option value="">Todas</option>
+          {% for room in rooms %}
+          <option value="{{ room.id }}"
+                  {% if selected_room == room.id|stringformat:'s' %}selected{% endif %}>
+            {{ room.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1 min-w-[160px]">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estudiante</label>
+        <select name="student"
+                class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800
+                       focus:border-[#5454E9] focus:outline-none focus:ring-2 focus:ring-[#5454E9]/20 transition">
+          <option value="">Todos</option>
+          {% for student in all_students %}
+          <option value="{{ student.id }}"
+                  {% if selected_student == student.id|stringformat:'s' %}selected{% endif %}>
+            {{ student.user.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit"
+              class="rounded-xl px-5 py-2 text-sm font-semibold text-gray-900 transition hover:opacity-80"
+              style="background-color: #E4EB60;">
+        Aplicar filtros
+      </button>
+
+    </form>
+  </div>
+
+  {# ── Cards de métricas globales ──────────────────────────────────────────── #}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+    {# Total casos #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #ede9fe;">
+        <svg class="h-5 w-5" fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ global_metrics.total_cases }}</p>
+      <p class="mt-1 text-sm text-gray-500">Total de casos</p>
+    </div>
+
+    {# Casos activos #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #fff7ed;">
+        <svg class="h-5 w-5" fill="none" stroke="#ea580c" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ global_metrics.active_cases }}</p>
+      <p class="mt-1 text-sm text-gray-500">Casos activos</p>
+    </div>
+
+    {# Casos cerrados #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #f0fdf4;">
+        <svg class="h-5 w-5" fill="none" stroke="#16a34a" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ global_metrics.closed_cases }}</p>
+      <p class="mt-1 text-sm text-gray-500">Casos cerrados</p>
+    </div>
+
+    {# Carga promedio #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #eff6ff;">
+        <svg class="h-5 w-5" fill="none" stroke="#2563eb" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ global_metrics.avg_load }}</p>
+      <p class="mt-1 text-sm text-gray-500">Carga promedio</p>
+    </div>
+
+  </div>
+
+  {# ── Tabla de métricas por estudiante ────────────────────────────────────── #}
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-700">Desempeño por estudiante</h2>
+      {% if students_metrics %}
+      <span class="text-xs text-gray-400 font-medium">
+        {{ students_metrics|length }} estudiante{{ students_metrics|length|pluralize }}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if students_metrics %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50/60">
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Estudiante</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Activos</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Cerrados</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Total</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 min-w-[200px]">Desempeño</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for metric in students_metrics %}
+          {% with perf=metric.performance|floatformat:0 %}
+          <tr class="hover:bg-gray-50/70 transition-colors">
+
+            {# Avatar + nombre #}
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+                            text-sm font-bold text-white"
+                     style="background-color: #5454E9;">
+                  {{ metric.name|slice:":1"|upper }}
+                </div>
+                <span class="font-semibold text-gray-900">{{ metric.name }}</span>
+              </div>
+            </td>
+
+            {# Casos activos con indicador de color #}
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5
+                           text-xs font-semibold bg-orange-100 text-orange-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block"></span>
+                {{ metric.active_cases }}
+              </span>
+            </td>
+
+            {# Casos cerrados con indicador de color #}
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5
+                           text-xs font-semibold bg-emerald-100 text-emerald-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                {{ metric.closed_cases }}
+              </span>
+            </td>
+
+            {# Total neutro #}
+            <td class="px-6 py-4 font-semibold text-gray-700">
+              {{ metric.total_cases }}
+            </td>
+
+            {# Desempeño: barra de progreso + badge #}
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+
+                {# Barra de progreso #}
+                <div class="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden min-w-[80px]">
+                  {% if metric.performance >= 70 %}
+                    <div class="h-full rounded-full bg-emerald-400 transition-all"
+                         style="width: {{ metric.performance|floatformat:0 }}%;"></div>
+                  {% elif metric.performance >= 40 %}
+                    <div class="h-full rounded-full bg-amber-400 transition-all"
+                         style="width: {{ metric.performance|floatformat:0 }}%;"></div>
+                  {% else %}
+                    <div class="h-full rounded-full bg-red-400 transition-all"
+                         style="width: {{ metric.performance|floatformat:0 }}%;"></div>
+                  {% endif %}
+                </div>
+
+                {# Porcentaje + badge de estado #}
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-xs font-bold text-gray-700 w-9 text-right">
+                    {{ metric.performance|floatformat:0 }}%
+                  </span>
+                  {% if metric.performance >= 70 %}
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5
+                                 text-xs font-semibold bg-emerald-100 text-emerald-700">
+                      Aprobado
+                    </span>
+                  {% elif metric.performance >= 40 %}
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5
+                                 text-xs font-semibold bg-amber-100 text-amber-700">
+                      En progreso
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5
+                                 text-xs font-semibold bg-red-100 text-red-700">
+                      En riesgo
+                    </span>
+                  {% endif %}
+                </div>
+
+              </div>
+            </td>
+
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+
+    {# Estado vacío #}
+    <div class="px-6 py-12 text-center">
+      <div class="mx-auto w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <p class="font-semibold text-gray-700">No hay métricas para mostrar</p>
+      <p class="mt-1 text-sm text-gray-400 max-w-sm mx-auto">
+        Ajusta los filtros o verifica que existan casos registrados para los criterios seleccionados.
+      </p>
+    </div>
+
+    {% endif %}
+  </div>
+
+</div>
+{% endblock dashboard_content %}

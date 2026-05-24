@@ -1,0 +1,287 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado + acciones ──────────────────────────────────────────────── #}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Módulo académico</p>
+      <h1 class="mt-1 text-2xl font-bold text-gray-900">Carga académica por estudiante</h1>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <form method="post" action="{% url 'accounts:auto-assign-cases' %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
+                       text-gray-900 transition hover:opacity-80"
+                style="background-color: #E4EB60;">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Asignación automática
+        </button>
+      </form>
+      <a href="{% url 'accounts:auto-assign-results' %}"
+         class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white
+                px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Ver resultados
+      </a>
+    </div>
+  </div>
+
+  {# ── Filtro de sala ─────────────────────────────────────────────────────── #}
+  <div class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+    <label class="text-sm font-semibold text-gray-700 shrink-0">Sala:</label>
+    <select id="roomFilter"
+            class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800
+                   focus:border-[#5454E9] focus:outline-none focus:ring-2 focus:ring-[#5454E9]/20 transition">
+      <option value="">Todas las salas</option>
+      {% for room in rooms %}
+      <option value="{{ room.id }}">{{ room.name }}</option>
+      {% endfor %}
+    </select>
+    <span id="statusMessage" class="text-xs text-gray-400 italic"></span>
+  </div>
+
+  {# ── Cards de métricas ──────────────────────────────────────────────────── #}
+  <div class="grid gap-4 sm:grid-cols-3">
+
+    {# Carga media #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #ede9fe;">
+        <svg class="h-5 w-5" fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <p id="avgLoad" class="text-3xl font-bold text-gray-900">0.0</p>
+      <p class="mt-1 text-sm text-gray-500">Carga media</p>
+    </div>
+
+    {# Sobrecargados #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #fff7ed;">
+        <svg class="h-5 w-5" fill="none" stroke="#ea580c" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p id="overloadedStudents" class="text-3xl font-bold text-gray-900">0</p>
+      <p class="mt-1 text-sm text-gray-500">Estudiantes sobrecargados</p>
+    </div>
+
+    {# Disponibles #}
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+           style="background-color: #f0fdf4;">
+        <svg class="h-5 w-5" fill="none" stroke="#16a34a" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p id="availableStudents" class="text-3xl font-bold text-gray-900">0</p>
+      <p class="mt-1 text-sm text-gray-500">Estudiantes disponibles</p>
+    </div>
+
+  </div>
+
+  {# ── Actividad reciente (tabla de estudiantes) ──────────────────────────── #}
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-700">Actividad reciente</h2>
+      <span id="studentCount" class="text-xs text-gray-400 font-medium"></span>
+    </div>
+
+    {# Tabla oculta, visible cuando hay datos #}
+    <div id="tableWrapper" class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50/60">
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Estudiante</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Casos</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Rojo</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Amarillo</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Verde</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Nota parcial</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardRows" class="divide-y divide-gray-50">
+          <tr>
+            <td colspan="6" class="px-6 py-10 text-center text-gray-400">Cargando datos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {# Estado vacío #}
+    <div id="emptyState" class="hidden px-6 py-12 text-center">
+      <div class="mx-auto w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <p class="font-semibold text-gray-700">No hay casos activos en esta sala</p>
+      <p class="mt-1 text-sm text-gray-400">Intenta seleccionar otra sala o verifica el período actual.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const endpoint             = '/academic-dashboard/';
+  const roomFilter           = document.getElementById('roomFilter');
+  const statusMessage        = document.getElementById('statusMessage');
+  const dashboardRows        = document.getElementById('dashboardRows');
+  const emptyState           = document.getElementById('emptyState');
+  const tableWrapper         = document.getElementById('tableWrapper');
+  const avgLoad              = document.getElementById('avgLoad');
+  const overloadedStudents   = document.getElementById('overloadedStudents');
+  const availableStudents    = document.getElementById('availableStudents');
+  const studentCount         = document.getElementById('studentCount');
+
+  // Paleta de badges — light theme
+  const BADGE_PALETTE = {
+    RED:    { bg: '#fee2e2', color: '#b91c1c' },
+    YELLOW: { bg: '#fef9c3', color: '#92400e' },
+    GREEN:  { bg: '#dcfce7', color: '#15803d' },
+    NONE:   { bg: '#f3f4f6', color: '#9ca3af' },
+  };
+
+  function buildBadge(label, type, count, caseId) {
+    const pal   = count > 0 ? BADGE_PALETTE[type] : BADGE_PALETTE.NONE;
+    const badge = document.createElement('button');
+    badge.type  = 'button';
+    badge.style.cssText = `
+      display:inline-flex; align-items:center; padding:2px 10px; border-radius:9999px;
+      font-size:0.75rem; font-weight:600;
+      background-color:${pal.bg}; color:${pal.color};
+      border:none; cursor:${count > 0 && type === 'RED' && caseId ? 'pointer' : 'default'};
+      transition:opacity .15s;
+    `;
+    badge.textContent = `${label} (${count})`;
+    if (type === 'RED' && caseId && count > 0) {
+      badge.addEventListener('click', () => { window.location.href = `/cases/${caseId}/`; });
+      badge.style.cursor = 'pointer';
+    }
+    return badge;
+  }
+
+  // Avatar circular con inicial
+  function avatarHtml(name) {
+    const initial = (name || '?').charAt(0).toUpperCase();
+    return `<div style="width:2.25rem;height:2.25rem;border-radius:9999px;background:#5454E9;
+                        display:flex;align-items:center;justify-content:center;
+                        color:#fff;font-size:0.875rem;font-weight:700;flex-shrink:0;">
+              ${initial}
+            </div>`;
+  }
+
+  function gradeColor(grade) {
+    if (grade >= 3.5) return { bg: '#dcfce7', color: '#15803d' };
+    if (grade >= 3.0) return { bg: '#fef9c3', color: '#92400e' };
+    return { bg: '#fee2e2', color: '#b91c1c' };
+  }
+
+  function renderTable(data) {
+    dashboardRows.innerHTML = '';
+    if (!Array.isArray(data.students) || data.students.length === 0) {
+      emptyState.classList.remove('hidden');
+      tableWrapper.classList.add('hidden');
+      studentCount.textContent = '';
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    tableWrapper.classList.remove('hidden');
+    studentCount.textContent = `${data.students.length} estudiante${data.students.length !== 1 ? 's' : ''}`;
+
+    data.students.forEach(student => {
+      const row       = document.createElement('tr');
+      row.className   = 'hover:bg-gray-50/70 transition-colors';
+
+      // Celda: avatar + nombre
+      const nameCell  = document.createElement('td');
+      nameCell.className = 'px-6 py-4';
+      nameCell.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          ${avatarHtml(student.name)}
+          <span style="font-weight:600;color:#111827;">${escapeHtml(student.name)}</span>
+        </div>`;
+
+      const totalCell = document.createElement('td');
+      totalCell.className = 'px-6 py-4 text-gray-600';
+      totalCell.textContent = student.total_cases;
+
+      const redCell    = document.createElement('td');
+      redCell.className = 'px-6 py-4';
+      redCell.appendChild(buildBadge('Rojo', 'RED', student.red_count, student.critical_case_id));
+
+      const yellowCell = document.createElement('td');
+      yellowCell.className = 'px-6 py-4';
+      yellowCell.appendChild(buildBadge('Amarillo', 'YELLOW', student.yellow_count));
+
+      const greenCell  = document.createElement('td');
+      greenCell.className = 'px-6 py-4';
+      greenCell.appendChild(buildBadge('Verde', 'GREEN', student.green_count));
+
+      const grade  = student.partial_grade;
+      const gc     = gradeColor(grade);
+      const gradeCell = document.createElement('td');
+      gradeCell.className = 'px-6 py-4';
+      gradeCell.innerHTML = `
+        <span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;
+                     font-size:0.75rem;font-weight:700;background:${gc.bg};color:${gc.color};">
+          ${grade.toFixed(1)}
+        </span>`;
+
+      row.append(nameCell, totalCell, redCell, yellowCell, greenCell, gradeCell);
+      dashboardRows.appendChild(row);
+    });
+  }
+
+  function updateSummary(summary) {
+    avgLoad.textContent            = summary.avg_load.toFixed(1);
+    overloadedStudents.textContent = summary.overloaded_students;
+    availableStudents.textContent  = summary.available_students;
+  }
+
+  function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  async function fetchDashboardData() {
+    statusMessage.textContent = 'Actualizando...';
+    const url = new URL(endpoint, window.location.origin);
+    if (roomFilter.value) url.searchParams.set('room', roomFilter.value);
+
+    try {
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Error en la API');
+      const data = await response.json();
+      updateSummary(data.summary || { avg_load: 0, overloaded_students: 0, available_students: 0 });
+      renderTable(data);
+      statusMessage.textContent = '';
+    } catch (error) {
+      statusMessage.textContent = 'No se pudo cargar. Intenta de nuevo.';
+      console.error(error);
+    }
+  }
+
+  roomFilter.addEventListener('change', fetchDashboardData);
+  setInterval(fetchDashboardData, 300000);
+  fetchDashboardData();
+</script>
+{% endblock dashboard_content %}

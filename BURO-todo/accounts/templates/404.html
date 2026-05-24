@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Página no encontrada · BURO ICESI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>* { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+
+  {# ── Navbar mínimo ───────────────────────────────────────────────────── #}
+  <div class="fixed top-0 left-0 right-0 px-6 py-3 flex items-center gap-3 shadow-sm z-10"
+       style="background-color: #5454E9;">
+    <img src="{% static 'accounts/img/marca/icesiWhite.svg' %}" alt="ICESI" class="h-7">
+    <span class="text-white font-bold text-lg tracking-tight">| BURO</span>
+  </div>
+
+  {# ── Contenido central ───────────────────────────────────────────────── #}
+  <div class="flex flex-col items-center text-center mt-16 max-w-md">
+
+    {# Mascota #}
+    <img src="{% static 'accounts/img/mascota.png' %}"
+         alt="Mascota ICESI"
+         class="w-64 h-auto mb-6 drop-shadow-lg">
+
+    {# Código + mensaje #}
+    <h1 class="text-6xl font-extrabold" style="color: #E4EB60; -webkit-text-stroke: 2px #b5b800;">404</h1>
+    <h2 class="mt-3 text-2xl font-bold" style="color: #1b1d42;">¡Ups! Página no encontrada</h2>
+    <p class="mt-2 text-base text-gray-500 leading-relaxed">
+      La página que buscas no existe o fue movida.<br>
+      No te preocupes, puedes volver al inicio.
+    </p>
+
+    {# Botones #}
+    <div class="mt-8 flex flex-col sm:flex-row gap-3">
+      <a href="{% url 'accounts:dashboard' %}"
+         class="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3
+                font-semibold text-gray-900 transition hover:opacity-80"
+         style="background-color: #E4EB60;">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>
+        </svg>
+        Ir al dashboard
+      </a>
+      <button onclick="history.back()"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200
+                     px-6 py-3 font-semibold text-gray-600 transition hover:bg-gray-50">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Volver atrás
+      </button>
+    </div>
+
+  </div>
+
+</body>
+</html>

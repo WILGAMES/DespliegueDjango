@@ -1,0 +1,98 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado ── #}
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Estado de casos</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">Mis casos</h1>
+      <p class="mt-0.5 text-sm text-slate-500">Se muestran solo los casos asignados a tu perfil.</p>
+    </div>
+    {% if beneficiary_cases %}
+    <div class="shrink-0 bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-3 text-center">
+      <p class="text-2xl font-bold text-[#5454E9]">{{ beneficiary_cases|length }}</p>
+      <p class="text-xs text-slate-400 mt-0.5">caso{{ beneficiary_cases|length|pluralize }} registrado{{ beneficiary_cases|length|pluralize }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Grid de casos ── #}
+  {% if beneficiary_cases %}
+  <div class="grid gap-4 xl:grid-cols-2">
+    {% for case in beneficiary_cases %}
+    <article class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow">
+
+      {# Cabecera: número + badge de estado #}
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Caso</p>
+          <h3 class="mt-1 text-xl font-bold text-slate-800">{{ case.number }}</h3>
+        </div>
+
+        {% if case.status == 'Pendiente' %}
+        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-100">
+          Pendiente
+        </span>
+        {% elif case.status == 'En proceso' %}
+        <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
+          En proceso
+        </span>
+        {% elif case.status == 'Finalizado' or case.status == 'Cerrado' %}
+        <span class="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 border border-green-100">
+          {{ case.status }}
+        </span>
+        {% else %}
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 border border-gray-200">
+          {{ case.status }}
+        </span>
+        {% endif %}
+      </div>
+
+      {# Cuerpo: metadatos del caso #}
+      <div class="mt-4 pt-4 border-t border-gray-100 grid gap-3 sm:grid-cols-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Fecha de apertura</p>
+          <p class="mt-1 text-sm text-slate-600">{{ case.created_at|date:'d/m/Y' }}</p>
+        </div>
+
+        {% if case.room %}
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Sala jurídica</p>
+          <p class="mt-1 text-sm text-slate-600">{{ case.room.name }}</p>
+        </div>
+        {% endif %}
+
+        {% if case.description %}
+        <div class="sm:col-span-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Descripción</p>
+          <p class="mt-1 text-sm text-slate-600 leading-relaxed">{{ case.description }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </article>
+    {% endfor %}
+  </div>
+
+  {% else %}
+
+  {# ── Estado vacío ── #}
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+    <div class="mx-auto w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+      <svg class="h-7 w-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <p class="text-base font-semibold text-slate-700">No tienes casos registrados</p>
+    <p class="mt-1 text-sm text-slate-400 max-w-sm mx-auto">
+      Aún no se han asignado casos a tu perfil. Revisa con la secretaria para activar tu expediente.
+    </p>
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock dashboard_content %}

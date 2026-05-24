@@ -1,0 +1,60 @@
+# =========================
+# ENVIRONMENTS & SECRETS
+# =========================
+.env
+*.env
+venv/
+.venv/
+env/
+ENV/
+
+# =========================
+# PYTHON / DJANGO
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Logs
+*.log
+
+# =========================
+# TESTS / COVERAGE
+# =========================
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# =========================
+# IDEs / EDITORS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+
+
+# =========================
+# BUILD FILES
+# =========================
+dist/
+build/
+*.egg-info/
+
+# =========================
+# DATABASE TOOLS
+# =========================
+.dbeaver-data-sources*.xml
+
+# =========================
+# MISC
+# =========================
+.ipynb_checkpoints/

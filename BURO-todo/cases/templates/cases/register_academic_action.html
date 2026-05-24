@@ -1,0 +1,302 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Caso #{{ case.id }}</p>
+        <h2 class="mt-2 text-2xl font-semibold text-white">{{ case.student.user.name }}</h2>
+        <p class="mt-2 text-sm text-slate-400">{{ case.room.name }} · Vence: {{ case.legal_deadline }}</p>
+      </div>
+      {% include 'components/status_badge.html' with status=case.status %}
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Nota parcial acumulada</p>
+    <div class="mt-4 flex items-end gap-3">
+      <span id="nota-parcial" class="text-5xl font-bold text-yellow-300">--</span>
+      <span class="mb-2 text-sm text-slate-400">/ 5.0</span>
+    </div>
+    <p class="mt-2 text-xs text-slate-500">Se recalcula automáticamente al registrar una nueva acción.</p>
+  </section>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+      <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Registro</p>
+      <h2 class="mt-2 text-xl font-semibold text-white">Registrar acción académica</h2>
+      <p class="mt-2 text-sm text-slate-400">Complete los campos y confirme el registro.</p>
+
+      <div class="mt-6">
+        {% include 'components/note.html' with title='Registro inmutable' message='Una vez guardada, la acción no puede modificarse. Solo se puede agregar una observación adicional con aprobación del coordinador.' %}
+      </div>
+
+      <div class="mt-6 space-y-5">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-300">
+            Tipo de acción <span class="text-yellow-300">*</span>
+          </label>
+          <select id="action-type"
+                  class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  onchange="toggleAttendanceFields()">
+            <option value="">Seleccione un tipo</option>
+            <option value="document">Entrega de documento</option>
+            <option value="followup">Seguimiento</option>
+            <option value="attendance">Asistencia a cita</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-300">
+            Nota <span class="text-yellow-300">*</span>
+          </label>
+          <input id="grade" type="number" min="0.0" max="5.0" step="0.1"
+                 placeholder="0.0 – 5.0"
+                 class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-300">Observación (opcional)</label>
+          <textarea id="observation" rows="3" placeholder="Comentario del profesor..."
+                    class="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"></textarea>
+        </div>
+
+        <div id="attendance-fields" class="hidden space-y-4 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
+          <p class="text-xs font-semibold uppercase tracking-widest text-indigo-200">Datos de asistencia a cita</p>
+
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="text-sm text-gray-300">¿El estudiante asistió?</span>
+            <label class="flex cursor-pointer items-center gap-2">
+              <input type="radio" name="attended" value="true" class="text-indigo-500">
+              <span class="text-sm text-white">Sí</span>
+            </label>
+            <label class="flex cursor-pointer items-center gap-2">
+              <input type="radio" name="attended" value="false" class="text-indigo-500">
+              <span class="text-sm text-white">No</span>
+            </label>
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">Hora de llegada</label>
+            <input id="arrival-time" type="time"
+                   class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none">
+          </div>
+
+          {% include 'components/checkbox.html' with name='document_delivered' label='El estudiante entregó el documento en la cita' %}
+        </div>
+
+        <div id="error-msg" class="mb-4 hidden rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"></div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <a href="#" onclick="history.back(); return false;">
+            {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+          </a>
+          <div class="cursor-pointer" onclick="submitAction()">
+            {% include 'components/button.html' with variant='primary' text='Registrar acción' %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+      <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Historial</p>
+      <h2 class="mt-2 text-xl font-semibold text-white">Acciones en este caso</h2>
+      <p class="mt-2 text-sm text-slate-400">Acciones académicas registradas en este caso.</p>
+
+      {% if actions %}
+      <div id="actions-list" class="mt-6 space-y-3">
+        {% for action in actions %}
+        <div class="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 p-4">
+          <div>
+            <p class="text-sm font-semibold text-white">
+              {% if action.action_type == 'document' %}Entrega de documento
+              {% elif action.action_type == 'followup' %}Seguimiento
+              {% elif action.action_type == 'attendance' %}Asistencia a cita
+              {% endif %}
+            </p>
+            <p class="mt-0.5 text-xs text-slate-500">
+              {{ action.registered_at|date:"d/m/Y H:i" }} · {{ action.registered_by.user.name }}
+            </p>
+            {% if action.observation %}
+            <p class="mt-1 text-xs text-slate-400">{{ action.observation }}</p>
+            {% endif %}
+          </div>
+          <span class="ml-4 text-2xl font-bold {% if action.grade >= 3.5 %}text-yellow-300{% elif action.grade >= 2.5 %}text-indigo-200{% else %}text-red-400{% endif %}">
+            {{ action.grade }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div id="empty-actions" class="mt-6">
+        {% include 'components/empty_state.html' with title='Sin acciones registradas' description='Las acciones académicas registradas aparecerán aquí.' %}
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+{{ academic_action_config|json_script:"academic-action-config" }}
+<script>
+  const academicActionConfig = JSON.parse(
+    document.getElementById('academic-action-config').textContent
+  );
+  const CASE_ID = academicActionConfig.caseId;
+  const PARTIAL_GRADE_URL = academicActionConfig.partialGradeUrl;
+  const REGISTER_ACTION_URL = academicActionConfig.registerActionUrl;
+
+  function toggleAttendanceFields() {
+    const type = document.getElementById('action-type').value;
+    const fields = document.getElementById('attendance-fields');
+    if (type === 'attendance') {
+      fields.classList.remove('hidden');
+    } else {
+      fields.classList.add('hidden');
+    }
+  }
+
+  async function submitAction() {
+    const actionType  = document.getElementById('action-type').value;
+    const grade       = document.getElementById('grade').value;
+    const observation = document.getElementById('observation').value;
+    const errorDiv    = document.getElementById('error-msg');
+
+    if (!actionType) return showError('Seleccione un tipo de acción.');
+    if (!grade)      return showError('Ingrese una nota entre 0.0 y 5.0.');
+    if (parseFloat(grade) < 0 || parseFloat(grade) > 5)
+      return showError('La nota debe estar entre 0.0 y 5.0.');
+
+    const body = {
+      case_id:     CASE_ID,
+      action_type: actionType,
+      grade:       parseFloat(grade),
+      observation: observation,
+    };
+
+    if (actionType === 'attendance') {
+      const attended = document.querySelector('[name="attended"]:checked')?.value;
+      const arrival  = document.getElementById('arrival-time').value;
+      const docDel   = document.querySelector('[name="document_delivered"]')?.checked;
+      body.attended           = attended === 'true';
+      body.arrival_time       = arrival || null;
+      body.document_delivered = docDel || false;
+    }
+
+    try {
+      const response = await fetch(REGISTER_ACTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 201) {
+        hideError();
+        document.getElementById('action-type').value = '';
+        document.getElementById('grade').value = '';
+        document.getElementById('observation').value = '';
+        document.getElementById('attendance-fields').classList.add('hidden');
+
+        appendActionToList(data, actionType, grade, observation);
+        fetchNotaParcial();
+      } else {
+        showError(data.error || 'Error al registrar la acción.');
+      }
+    } catch (err) {
+      showError('Error de conexión. Intente nuevamente.');
+    }
+  }
+
+  function appendActionToList(data, actionType, grade, observation) {
+    const emptyState = document.getElementById('empty-actions');
+    const section =
+      (emptyState && emptyState.closest('section')) ||
+      document.getElementById('actions-list')?.closest('section');
+    if (emptyState) emptyState.remove();
+
+    let list = document.getElementById('actions-list');
+    if (!list && section) {
+      list = document.createElement('div');
+      list.id = 'actions-list';
+      list.className = 'mt-6 space-y-3';
+      section.appendChild(list);
+    }
+    if (!list) return;
+
+    const typeLabel = {
+      document:   'Entrega de documento',
+      followup:   'Seguimiento',
+      attendance: 'Asistencia a cita',
+    }[actionType];
+
+    const g = parseFloat(grade);
+    const gradeClass = g >= 3.5 ? 'text-yellow-300' : g >= 2.5 ? 'text-indigo-200' : 'text-red-400';
+
+    const now = new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+
+    const el = document.createElement('div');
+    el.className = 'flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 p-4';
+    el.innerHTML = `
+      <div>
+        <p class="text-sm font-semibold text-white">${typeLabel}</p>
+        <p class="mt-0.5 text-xs text-slate-500">${now}</p>
+        ${observation ? `<p class="mt-1 text-xs text-slate-400">${observation}</p>` : ''}
+      </div>
+      <span class="ml-4 text-2xl font-bold ${gradeClass}">${parseFloat(grade).toFixed(1)}</span>
+    `;
+    list.prepend(el);
+  }
+
+  async function fetchNotaParcial() {
+    const el = document.getElementById('nota-parcial');
+    el.classList.remove('text-yellow-300', 'text-red-400');
+    el.classList.add('text-indigo-200');
+    el.textContent = '...';
+
+    try {
+      const response = await fetch(PARTIAL_GRADE_URL);
+      if (!response.ok) throw new Error('Error en la respuesta');
+      const data = await response.json();
+      el.classList.remove('text-indigo-200');
+      el.classList.add('text-yellow-300');
+      el.textContent = parseFloat(data.partial_grade).toFixed(1);
+    } catch (err) {
+      console.error('Error al obtener nota parcial:', err);
+      el.textContent = 'Error';
+      el.classList.remove('text-indigo-200', 'text-yellow-300');
+      el.classList.add('text-red-400');
+    }
+  }
+
+  function showError(msg) {
+    const errorDiv = document.getElementById('error-msg');
+    errorDiv.textContent = msg;
+    errorDiv.classList.remove('hidden');
+  }
+
+  function hideError() {
+    document.getElementById('error-msg').classList.add('hidden');
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      for (const cookie of document.cookie.split(';')) {
+        const c = cookie.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.slice(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.addEventListener('DOMContentLoaded', fetchNotaParcial);
+</script>
+{% endblock dashboard_content %}

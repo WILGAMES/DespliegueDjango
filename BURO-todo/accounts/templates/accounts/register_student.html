@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen">
+
+  {# Header #}
+  <header class="flex items-center justify-between py-4 pr-6">
+    {% include 'components/breadcrumb.html' with parent='Inicio de sesión' current='Registro de Estudiante' home_url='#' parent_url='#' %}
+    <img src="{% static 'accounts/img/marca/icesiWhite.svg' %}" class="h-12" alt="Universidad ICESI">
+  </header>
+
+  {# Card Glass #}
+  <main class="flex justify-center px-4 pb-12">
+    <div class="w-full max-w-3xl rounded-2xl p-8 border border-white/20 shadow-2xl"
+         style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+
+      <h2 class="text-2xl font-bold text-white mb-2">Registrar Estudiante</h2>
+      <p class="text-gray-400 text-sm mb-6">Registro de estudiante del consultorio jurídico ICESI</p>
+
+      {# Errores de validación #}
+      {% if form.errors %}
+      <div class="rounded-xl p-4 mb-6" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);">
+        <p class="text-red-400 text-sm font-semibold mb-2">Corrige los siguientes errores:</p>
+        {% for field in form %}
+          {% if field.errors %}
+            <p class="text-red-300 text-xs">{{ field.label }}: {{ field.errors.0 }}</p>
+          {% endif %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <p class="text-red-300 text-xs">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="space-y-5">
+          {# Nombre y Documento #}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% include 'components/input.html' with field=form.name label='Nombre completo' required=True %}
+            {% include 'components/input.html' with field=form.document label='Documento de identidad' required=True %}
+          </div>
+
+          {# Correo y Código estudiantil #}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% include 'components/input.html' with field=form.email label='Correo institucional (@icesi.edu.co)' required=True %}
+            {% include 'components/input.html' with field=form.student_code label='Código estudiantil (7 dígitos)' required=True %}
+          </div>
+
+          {# Semestre y Teléfono #}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% include 'components/input.html' with field=form.semester label='Semestre actual' required=True %}
+            {% include 'components/input.html' with field=form.phone label='Teléfono celular (para 2FA)' required=False %}
+          </div>
+
+          {# Contraseñas #}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% include 'components/input.html' with field=form.password1 label='Contraseña' required=True %}
+            {% include 'components/input.html' with field=form.password2 label='Confirmar contraseña' required=True %}
+          </div>
+        </div>
+
+        {# Botones #}
+        <div class="flex justify-center gap-3 mt-8">
+          <div onclick="window.history.back()">
+            {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+          </div>
+          <div>
+            {% include 'components/button.html' with variant='primary' text='Registrar Estudiante' type='submit' %}
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </main>
+</div>
+{% endblock content %}

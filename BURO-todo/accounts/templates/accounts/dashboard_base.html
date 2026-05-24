@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_class %}h-screen overflow-hidden flex flex-col{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+
+  {# ── Navbar superior ────────────────────────────────────────────────── #}
+  {% include 'components/navbar.html' with user_name=user_name user_role=role_name %}
+
+  {# ── Layout: Sidebar + Contenido ────────────────────────────────────── #}
+  <div class="flex flex-1 overflow-hidden">
+
+    {# ── Sidebar ────────────────────────────────────────────────────────── #}
+    <aside class="flex flex-col w-52 shrink-0 overflow-y-auto z-10"
+           style="background-color: #5454E9; border-right: 1px solid rgba(255,255,255,0.1);">
+
+      {# Breadcrumb #}
+      <div class="flex items-center gap-2 px-5 py-4 border-b"
+           style="border-color: rgba(255,255,255,0.1);">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="rgba(255,255,255,0.6)" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="text-xs" style="color: rgba(255,255,255,0.6);">/</span>
+        <span class="text-white text-xs font-medium truncate">{{ page_title|default:'Dashboard' }}</span>
+      </div>
+
+      {# Navegación #}
+      {% include 'components/dashboard_nav.html' %}
+    </aside>
+
+    {# ── Contenido principal ─────────────────────────────────────────────── #}
+    <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+      {% block dashboard_content %}{% endblock dashboard_content %}
+    </main>
+
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen">
+  {% include 'components/navbar.html' with user_name=request.user.name user_role=request.user.role.name %}
+
+  {# Header #}
+  <header class="flex items-center justify-between py-4 pr-6">
+    {% include 'components/breadcrumb.html' with parent='Inicio' current='Reportes Legales' home_url='/' parent_url='/' %}
+    <div class="flex items-center gap-2">
+      <img src="{% static 'accounts/img/marca/icesiWhite.svg' %}" class="h-12" alt="Universidad ICESI">
+    </div>
+  </header>
+
+  {# Card principal #}
+  <main class="flex justify-center px-4 pb-12">
+    <div class="w-full max-w-3xl rounded-2xl p-8 border border-white/20 shadow-2xl"
+      style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+
+      <h2 class="text-2xl font-bold text-white mb-2">
+        Reportes Legales para Entidades Gubernamentales
+      </h2>
+      <p class="text-gray-400 text-sm mb-6">
+        Genere reportes estandarizados de casos cerrados para responder a
+        solicitudes de entidades gubernamentales conforme a la Ley 2113 de 2021.
+      </p>
+
+      {# Nota informativa #}
+      {% include 'components/note.html' with title='Importante:' message='El reporte se generara con base en los casos en estado Cerrado dentro del rango de fechas seleccionado. Antes de descargar el PDF, el sistema validara que los datos esten completos.' %}
+
+      {# Mensajes flash #}
+      {% if messages %}
+        <div class="mb-6 mt-4">
+          {% for message in messages %}
+            <div class="rounded-xl p-4 mb-2
+              {% if message.tags == 'error' %}bg-red-500/20 border border-red-500/30
+              {% elif message.tags == 'warning' %}bg-orange-500/20 border border-orange-500/30
+              {% else %}bg-green-500/20 border border-green-500/30{% endif %}">
+              <p class="text-sm
+                {% if message.tags == 'error' %}text-red-400
+                {% elif message.tags == 'warning' %}text-orange-400
+                {% else %}text-green-400{% endif %}">
+                {{ message }}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# Formulario de filtros #}
+      <form method="post" class="mt-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label for="date_from" class="block text-sm font-medium text-gray-300 mb-2">
+              Fecha desde
+            </label>
+            <input type="date" name="date_from" id="date_from"
+                   class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700
+                          text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500
+                          focus:border-transparent transition-all duration-200 outline-none">
+          </div>
+
+          <div>
+            <label for="date_to" class="block text-sm font-medium text-gray-300 mb-2">
+              Fecha hasta
+            </label>
+            <input type="date" name="date_to" id="date_to"
+                   class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700
+                          text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500
+                          focus:border-transparent transition-all duration-200 outline-none">
+          </div>
+        </div>
+
+        {# Resumen previo #}
+        <div class="rounded-xl p-6 mb-6 bg-white/5 border border-white/10">
+          <h3 class="text-white font-bold mb-3 text-sm">Resumen del reporte</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs mb-1">Casos cerrados encontrados</p>
+              <p class="text-white text-xl font-bold">{{ total_cases_cerrados }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs mb-1">Casos con datos incompletos</p>
+              <p class="text-xl font-bold {% if incomplete_cases > 0 %}text-orange-400{% else %}text-green-400{% endif %}">
+                {{ incomplete_cases }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {# Confirmacion explicita #}
+        <div class="rounded-xl p-4 mb-6 bg-yellow-500/10 border border-yellow-500/30">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" name="confirm_generation" required
+                   class="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800">
+            <span class="text-sm text-gray-300">
+              Confirmo que la informacion del reporte sera usada con fines oficiales
+              conforme a la Ley 2113 de 2021 y la Ley 1581 de 2012 (Habeas Data).
+            </span>
+          </label>
+        </div>
+
+        {# Botones #}
+        <div class="flex justify-center gap-3">
+          <a href="{% url 'accounts:dashboard' %}">
+            {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+          </a>
+          <button type="submit"
+          class="px-6 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer hover:opacity-90"
+          style="background-color: #5454E9; color: white;"> Generar reporte PDF
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </main>
+</div>
+{% endblock content %}

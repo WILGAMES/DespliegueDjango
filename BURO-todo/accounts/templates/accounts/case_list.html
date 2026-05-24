@@ -1,0 +1,164 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-5">
+
+  {# ── Encabezado ──────────────────────────────────────────────────────── #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-400">Casos registrados</p>
+        <h2 class="mt-1 text-2xl font-semibold text-gray-900">Lista de casos</h2>
+      </div>
+      <a href="{% url 'accounts:case-create' %}"
+         class="inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold text-gray-900 transition hover:opacity-80"
+         style="background-color: #E4EB60;">
+        Nuevo caso
+      </a>
+    </div>
+  </section>
+
+  {# ── Filtros ──────────────────────────────────────────────────────────── #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-gray-500">Filtrar por estado:</span>
+      <div class="flex gap-2">
+        <button id="filter-activos"
+                class="filter-btn active rounded-lg px-4 py-2 text-sm font-semibold transition"
+                data-status="activos"
+                style="background-color: #E4EB60; color: #111;">
+          Activos
+        </button>
+        <button id="filter-cerrados"
+                class="filter-btn rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-100"
+                data-status="cerrados">
+          Cerrados
+        </button>
+      </div>
+    </div>
+  </section>
+
+  {# ── Tabla de casos ───────────────────────────────────────────────────── #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div id="cases-container">
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="min-w-full divide-y divide-gray-100 text-left text-sm">
+          <thead class="bg-gray-50 text-xs uppercase tracking-widest text-gray-400">
+            <tr>
+              <th class="px-6 py-4">Caso</th>
+              <th class="px-6 py-4">Beneficiario</th>
+              <th class="px-6 py-4">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="cases-table-body" class="divide-y divide-gray-100 text-gray-700">
+          </tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="hidden">
+        {% include 'components/empty_state.html' with title='No hay casos en este estado' description='Intenta cambiar el filtro para ver otros casos.' %}
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  async function fetchCases(status) {
+    try {
+      const response = await fetch(`/cases/list/?status=${status}`);
+      if (response.status === 403) {
+        console.error('Sin permiso para ver casos (403). Verifica el rol del usuario.');
+        renderError('No tienes permiso para ver los casos. Verifica tu sesión.');
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const cases = await response.json();
+      renderCasesTable(cases);
+    } catch (error) {
+      console.error('Error cargando casos:', error);
+      renderError('No se pudieron cargar los casos. Intenta recargar la página.');
+    }
+  }
+
+  function renderError(msg) {
+    document.getElementById('cases-table-body').innerHTML =
+      `<tr><td colspan="3" class="px-6 py-8 text-center text-red-500 text-sm font-medium">${msg}</td></tr>`;
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('cases-container').querySelector('div.overflow-x-auto').classList.remove('hidden');
+  }
+
+  function renderCasesTable(cases) {
+    const tableBody = document.getElementById('cases-table-body');
+    const emptyState = document.getElementById('empty-state');
+    const casesContainer = document.getElementById('cases-container');
+
+    if (!cases || cases.length === 0) {
+      tableBody.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      casesContainer.querySelector('div.overflow-x-auto').classList.add('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    casesContainer.querySelector('div.overflow-x-auto').classList.remove('hidden');
+
+    tableBody.innerHTML = cases.map(caseItem => `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-6 py-4 font-semibold text-gray-900">${escapeHtml(caseItem.number || 'N/A')}</td>
+        <td class="px-6 py-4 text-gray-600">${escapeHtml(caseItem.beneficiary || 'N/A')}</td>
+        <td class="px-6 py-4">
+          <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(caseItem.status)}">
+            ${escapeHtml(caseItem.status || 'N/A')}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderEmptyState() {
+    document.getElementById('cases-table-body').innerHTML = '';
+    document.getElementById('empty-state').classList.remove('hidden');
+  }
+
+  function getStatusBadgeClass(status) {
+    switch (status) {
+      case 'Cerrado':   return 'bg-red-100 text-red-600';
+      case 'active':
+      case 'En proceso': return 'bg-yellow-100 text-yellow-700';
+      case 'Pendiente':
+      case 'Asignado':  return 'bg-blue-100 text-blue-700';
+      default:          return 'bg-gray-100 text-gray-600';
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+        btn.classList.remove('active');
+        btn.classList.add('border', 'border-gray-200', 'bg-gray-50', 'text-gray-600', 'hover:bg-gray-100');
+      });
+
+      this.classList.remove('border', 'border-gray-200', 'bg-gray-50', 'text-gray-600', 'hover:bg-gray-100');
+      this.classList.add('active');
+      this.style.backgroundColor = '#E4EB60';
+      this.style.color = '#111';
+
+      fetchCases(this.dataset.status);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => fetchCases('activos'));
+</script>
+
+<style>
+  .filter-btn.active { background-color: #E4EB60 !important; color: #111 !important; }
+</style>
+{% endblock dashboard_content %}

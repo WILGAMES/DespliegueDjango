@@ -1,0 +1,96 @@
+{% extends 'reports/reports_base.html' %}
+{% block title %}Generar reporte{% endblock %}
+
+{% block reports_content %}
+<div class="flex flex-col items-center min-h-full py-4">
+
+  {# ── Contenedor centrado ── #}
+  <div class="w-full max-w-xl space-y-6">
+
+    {# ── Breadcrumb ── #}
+    <nav class="flex items-center gap-2 text-sm text-slate-400">
+      <a href="{% url 'reports:list' %}" class="hover:text-[#5454E9] transition-colors font-medium">Reportes</a>
+      <svg class="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-slate-700 font-medium">Generar nuevo</span>
+    </nav>
+
+    {# ── Encabezado de página ── #}
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Generar reporte</h1>
+      <p class="mt-0.5 text-sm text-slate-500">
+        Selecciona el periodo académico para generar el reporte de gestión.
+      </p>
+    </div>
+
+    {# ── Formulario ── #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="period_label">
+            Etiqueta del periodo
+          </label>
+          <input
+            type="text"
+            id="period_label"
+            name="period_label"
+            placeholder="Ej. 2026-1"
+            class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800
+                   placeholder-slate-400 focus:border-[#5454E9] focus:ring-2 focus:ring-[#5454E9]/20 focus:outline-none transition">
+          <p class="mt-1.5 text-xs text-slate-400">
+            Opcional. Si lo dejas vacío se usa el rango de fechas como etiqueta.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-sm font-semibold text-slate-700 mb-3">Rango de fechas <span class="text-red-500">*</span></p>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1.5" for="date_from">
+                Fecha de inicio
+              </label>
+              <input
+                type="date"
+                id="date_from"
+                name="date_from"
+                required
+                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800
+                       focus:border-[#5454E9] focus:ring-2 focus:ring-[#5454E9]/20 focus:outline-none transition">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1.5" for="date_to">
+                Fecha de fin
+              </label>
+              <input
+                type="date"
+                id="date_to"
+                name="date_to"
+                required
+                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800
+                       focus:border-[#5454E9] focus:ring-2 focus:ring-[#5454E9]/20 focus:outline-none transition">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2 border-t border-gray-100">
+          <button
+            type="submit"
+            class="flex-1 rounded-xl bg-[#5454E9] px-6 py-3 text-sm font-semibold text-white
+                   hover:bg-[#3E3EC8] shadow-sm transition-colors text-center">
+            Generar reporte
+          </button>
+          <a href="{% url 'reports:list' %}"
+             class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-slate-600
+                    hover:bg-gray-50 transition-colors">
+            Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

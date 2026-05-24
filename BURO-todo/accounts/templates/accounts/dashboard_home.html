@@ -1,0 +1,71 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+
+{# ── Saludo ─────────────────────────────────────────────────────────────── #}
+<div class="mb-7">
+  <h1 class="text-3xl font-bold tracking-tight" style="color: #1b1d42;">
+    Hola,&nbsp;<span class="px-2 py-0.5 rounded" style="background-color: #E4EB60;">{{ user_name|default:'Usuario' }}</span>
+  </h1>
+  {% if cards %}
+  <p class="mt-2 text-sm text-gray-500">
+    Tienes <strong class="text-gray-700">{{ cards|length }} sección{{ cards|length|pluralize }}</strong> disponible{{ cards|length|pluralize }} esta semana.
+  </p>
+  {% endif %}
+</div>
+
+{# ── Cards + acciones rápidas ────────────────────────────────────────────── #}
+<div class="grid gap-6 lg:grid-cols-2">
+
+  {# ── Métricas del rol ──────────────────────────────────────────────────── #}
+  {% if cards %}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-sm font-semibold uppercase tracking-widest text-gray-400">Mis casos activos</p>
+      {% if cards.0.link %}
+      <a href="{{ cards.0.link }}"
+         class="flex items-center gap-1 text-xs font-semibold transition-colors hover:opacity-70"
+         style="color: #5454E9;">
+        Ver todos
+        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+      {% endif %}
+    </div>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% for card in cards %}
+      <a href="{{ card.link }}"
+         class="rounded-xl border border-gray-100 bg-gray-50 p-5 block transition hover:border-[#5454E9]/30 hover:bg-[#5454E9]/5">
+        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ card.label }}</p>
+        <p class="mt-2 text-3xl font-bold" style="color: #1b1d42;">{{ card.value }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ── Acciones rápidas ──────────────────────────────────────────────────── #}
+  {% if quick_actions %}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-4">Acciones rápidas</p>
+    <div class="space-y-3">
+      {% for action in quick_actions %}
+      <a href="{{ action.link }}"
+         class="flex items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 px-5 py-4 transition
+                hover:border-[#5454E9]/40 hover:bg-[#5454E9]/5">
+        <div>
+          <p class="text-base font-semibold text-gray-900">{{ action.title }}</p>
+          <p class="mt-0.5 text-sm text-gray-500">{{ action.description }}</p>
+        </div>
+        <svg class="h-5 w-5 shrink-0" fill="none" stroke="#5454E9" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock dashboard_content %}

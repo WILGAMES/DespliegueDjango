@@ -1,0 +1,66 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Caso #{{ appointment.case.id }}</p>
+    <h2 class="mt-2 text-2xl font-semibold text-white">Reprogramar cita</h2>
+    <p class="mt-1 text-sm text-slate-400">
+      Fecha actual:
+      <span class="text-white font-medium">
+        {{ appointment.scheduled_datetime|date:"d/m/Y H:i" }}
+      </span>
+    </p>
+  </section>
+
+  {% if messages %}
+    {% for message in messages %}
+    <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-300">
+          Nueva fecha y hora <span class="text-yellow-300">*</span>
+        </label>
+        <input
+          type="datetime-local"
+          name="new_datetime"
+          required
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+        >
+      </div>
+
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-300">
+          Motivo del cambio
+          <span class="text-slate-500">(si no se registra, se generará una alerta al profesor)</span>
+        </label>
+        <textarea
+          name="reason"
+          rows="3"
+          placeholder="Ej: Solicitud del beneficiario, audiencia cancelada..."
+          class="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <a href="javascript:history.back()">
+          {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+        </a>
+        <button type="submit">
+          {% include 'components/button.html' with variant='primary' text='Confirmar reprogramación' %}
+        </button>
+      </div>
+    </form>
+  </section>
+
+</div>
+{% endblock dashboard_content %}

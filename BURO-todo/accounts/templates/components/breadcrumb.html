@@ -1,0 +1,17 @@
+{% load static %}
+{# ejemplo de uso: {% include 'accounts/components/breadcrumb.html' with parent='Inicio de sesión' current='Registro de Beneficiario' home_url='#' parent_url='#' %} #}
+<nav class="inline-flex items-center gap-0.5 py-1.5 px-4 rounded-r-2xl text-sm"
+     style="background: rgba(0, 0, 0, 0.62);">
+    
+    <a href="{{ home_url|default:'#' }}">
+        <img src="{% static 'accounts/icons/home.svg' %}" class="w-4 h-4" alt="Inicio">
+    </a>
+
+    <img src="{% static 'accounts/icons/arrowR.svg' %}" class="w-3 h-3" alt="">
+    <a href="{{ parent_url|default:'#' }}" class="text-gray-400 text-xs hover:text-white transition-colors">
+        {{ parent }}
+    </a>
+
+    <img src="{% static 'accounts/icons/arrowR.svg' %}" class="w-3 h-3" alt="">
+    <span class="text-white font-medium text-xs">{{ current }}</span>
+</nav>

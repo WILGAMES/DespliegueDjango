@@ -1,0 +1,171 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado + filtro ────────────────────────────────────────────────── #}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Asignación de casos</p>
+      <h1 class="mt-1 text-2xl font-bold text-gray-900">Resultados de asignación</h1>
+    </div>
+    <form method="get" class="flex items-center gap-2">
+      <label for="order" class="text-sm font-medium text-gray-600 shrink-0">Ordenar por</label>
+      <select id="order" name="order"
+              class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800
+                     focus:border-[#5454E9] focus:outline-none focus:ring-2 focus:ring-[#5454E9]/20 transition">
+        <option value="id"   {% if selected_order == 'id'   %}selected{% endif %}>ID</option>
+        <option value="date" {% if selected_order == 'date' %}selected{% endif %}>Fecha</option>
+      </select>
+      <button type="submit"
+              class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold
+                     text-gray-700 hover:bg-gray-50 transition">
+        Aplicar
+      </button>
+    </form>
+  </div>
+
+  {# ── Acciones rápidas ───────────────────────────────────────────────────── #}
+  <div class="grid gap-4 sm:grid-cols-2">
+
+    <a href="{% url 'accounts:student-load' %}"
+       class="flex items-center gap-4 rounded-2xl border-2 bg-white p-5 shadow-sm transition hover:shadow-md"
+       style="border-color: #5454E9;">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+           style="background-color: #ede9fe;">
+        <svg class="h-5 w-5" fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-gray-900">Ver carga académica</p>
+        <p class="text-sm text-gray-500 mt-0.5">Distribución de casos por estudiante</p>
+      </div>
+      <svg class="h-5 w-5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+
+    <form method="post" action="{% url 'accounts:auto-assign-cases' %}" class="block">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5
+                     shadow-sm transition hover:shadow-md hover:border-[#E4EB60] text-left">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+             style="background-color: #fefce8;">
+          <svg class="h-5 w-5" fill="none" stroke="#ca8a04" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-gray-900">Ejecutar asignación automática</p>
+          <p class="text-sm text-gray-500 mt-0.5">Reasigna los casos pendientes</p>
+        </div>
+        <svg class="h-5 w-5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </form>
+
+  </div>
+
+  {# ── Tabla de resultados ────────────────────────────────────────────────── #}
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-700">Casos asignados</h2>
+      {% if assigned_cases %}
+      <span class="text-xs text-gray-400 font-medium">
+        {{ assigned_cases|length }} caso{{ assigned_cases|length|pluralize }}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if assigned_cases %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50/60">
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Caso</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Estudiante asignado</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Estado</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Fecha creación</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for case in assigned_cases %}
+          <tr class="hover:bg-gray-50/70 transition-colors">
+
+            {# Caso con avatar circular #}
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+                            text-sm font-bold text-white"
+                     style="background-color: #5454E9;">
+                  {{ case.id|stringformat:"d"|slice:":1" }}
+                </div>
+                <span class="font-semibold text-gray-900">CASO-{{ case.id }}</span>
+              </div>
+            </td>
+
+            {# Estudiante con avatar #}
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0
+                            text-xs font-bold text-white"
+                     style="background-color: #7c3aed;">
+                  {{ case.student.user.name|slice:":1"|upper }}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">{{ case.student.user.name }}</p>
+                </div>
+              </div>
+            </td>
+
+            {# Estado con badge de color #}
+            <td class="px-6 py-4">
+              {% if case.status == 'Cerrado' %}
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+                             bg-red-100 text-red-700">{{ case.status }}</span>
+              {% elif case.status == 'En proceso' or case.status == 'active' %}
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+                             bg-amber-100 text-amber-700">{{ case.status }}</span>
+              {% elif case.status == 'Pendiente' or case.status == 'Asignado' %}
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+                             bg-blue-100 text-blue-700">{{ case.status }}</span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+                             bg-gray-100 text-gray-600">{{ case.status }}</span>
+              {% endif %}
+            </td>
+
+            <td class="px-6 py-4 text-gray-500">{{ case.created_at|date:'d/m/Y H:i' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+
+    {# Estado vacío #}
+    <div class="px-6 py-12 text-center">
+      <div class="mx-auto w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <p class="font-semibold text-gray-700">No hay casos asignados</p>
+      <p class="mt-1 text-sm text-gray-400">
+        Ejecuta la asignación automática para ver resultados en esta pantalla.
+      </p>
+    </div>
+
+    {% endif %}
+  </div>
+
+</div>
+{% endblock dashboard_content %}

@@ -1,0 +1,106 @@
+{% extends 'reports/reports_base.html' %}
+{% block title %}Reportes del sistema{% endblock %}
+
+{% block reports_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado de página ── #}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Gestión académica</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">Reportes del sistema</h1>
+      <p class="mt-0.5 text-sm text-slate-500">Historial de reportes generados por periodo académico.</p>
+    </div>
+    <a href="{% url 'reports:generate' %}"
+       class="inline-flex items-center gap-2 rounded-xl bg-[#5454E9] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#3E3EC8] shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Generar nuevo
+    </a>
+  </div>
+
+  {# ── Tabla de reportes ── #}
+  {% if reports %}
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-slate-700">Reportes generados</h2>
+      <span class="text-xs text-slate-400 font-medium">{{ reports|length }} registro{{ reports|length|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50/60">
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Periodo</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Rango de fechas</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Generado</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Origen</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for report in reports %}
+          <tr class="hover:bg-gray-50/70 transition-colors">
+            <td class="px-6 py-4 font-semibold text-slate-800">{{ report.period_label }}</td>
+            <td class="px-6 py-4 text-slate-500">{{ report.date_from }} — {{ report.date_to }}</td>
+            <td class="px-6 py-4 text-slate-500">{{ report.generated_at|date:"d/m/Y H:i" }}</td>
+            <td class="px-6 py-4">
+              {% if report.is_automatic %}
+              <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-100">
+                Automático
+              </span>
+              {% else %}
+              <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200">
+                Manual
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <a href="{% url 'reports:detail' report.pk %}"
+                   class="rounded-lg bg-[#5454E9]/10 px-3 py-1.5 text-xs font-semibold text-[#5454E9] hover:bg-[#5454E9]/20 transition-colors">
+                  Ver
+                </a>
+                <a href="{% url 'reports:export-pdf' report.pk %}"
+                   class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 transition-colors border border-red-100">
+                  PDF
+                </a>
+                <a href="{% url 'reports:export-csv' report.pk %}"
+                   class="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors border border-green-100">
+                  Excel
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+
+  {# ── Estado vacío ── #}
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+    <div class="mx-auto w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+      <svg class="h-7 w-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <p class="text-base font-semibold text-slate-700">No hay reportes generados aún</p>
+    <p class="mt-1 text-sm text-slate-400">
+      Usa el botón <strong class="text-slate-600">+ Generar nuevo</strong> para crear el primer reporte.
+    </p>
+    <a href="{% url 'reports:generate' %}"
+       class="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#5454E9] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#3E3EC8] shadow-sm transition-colors">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Generar primer reporte
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

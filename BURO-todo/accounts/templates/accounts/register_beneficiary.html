@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen ">
+
+  {#Header (Breadcrumbs/Logo) #}
+  <header class="flex items-center justify-between py-4 pr-6">
+    <!--TODO: Add URL when it is ready-->
+    {% include 'components/breadcrumb.html' with parent='Inicio de sesión' current='Registro de Beneficiario' home_url='#' parent_url='#' %}
+
+    <div class="flex items-center gap-2">
+      <img src="{% static 'accounts/img/marca/icesiWhite.svg' %}" class="h-12" alt="Universidad ICESI">
+    </div>
+  </header>
+
+  {#Card Glass principal #}
+  <main class="flex justify-center px-4 pb-12">
+    <div class="w-full max-w-3xl rounded-2xl p-8 border border-white/20 shadow-2xl"
+      style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+
+      {#Stepper #}
+      {% include 'components/stepper.html' %}
+      {#Formulario#}
+      <form method="post" id="register-form">
+        {% csrf_token %}
+
+        {#PASO 1: Pre-Registro #}
+        <div id="step-1" class="step-content">
+          <h2 class="text-2xl font-bold text-white mb-2">
+            Pre-registro en el consultorio jurídico
+          </h2>
+          <p class="text-gray-400 text-sm mb-6">
+            Antes de continuar con el proceso, es necesario autorizar el
+            <strong class="text-white">tratamiento</strong> de tus datos
+            personales y aceptar los términos de la prestación del servicio.
+          </p>
+
+          {#Nota #}
+          <div>
+          {% include 'components/note.html' with title='Nota importante:' message='En caso de que el titular sea menor de edad, el diligenciamiento del formulario debe realizarlo en compañía de su representante legal o responsable, quien autoriza a la Universidad Icesi al tratamiento de sus datos personales y los del menor representado de acuerdo a los fines y usos expuestos en la presente autorización.' %}
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed mb-6">
+            Autorizo a la Universidad Icesi a través del Consultorio Jurídico de la
+            Facultad de Derecho y su Centro de Conciliación, como responsable del
+            tratamiento de los datos personales, para la recolección, almacenamiento,
+            uso, transmisión y/o transferencia de los datos personales suministrados
+            en este formulario, para las finalidades dispuestas en la Política de
+            tratamiento de datos personales
+            (<a href="https://www.icesi.edu.co/es/politica-de-tratamiento-de-datos-personales" target="_blank"
+              class="underline" style="color: #ADADFF;">
+              consultar aquí</a>).
+          </p>
+
+          {# Checkboxes de consentimiento #}
+          <div class="space-y-4 mb-8">
+            {% include 'components/checkbox.html' with django_field=form.data_authorization label='Autorizo el tratamiento de mis datos personales' link_text='Ver política completa' %}
+            {% include 'components/checkbox.html' with name='acepto_ley' label='He leído y acepto el tratamiento de mis datos personales según la Ley 1581 de 2012.' %}
+          </div>
+          {% if form.data_authorization.errors %}
+          <p class="text-red-400 text-xs mb-4">{{ form.data_authorization.errors.0 }}</p>
+          {% endif %}
+
+          {#Botones Paso 1 #}
+          <div class="flex justify-center gap-3">
+            <div onclick="window.location.href='/'" >
+              {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+            </div>
+            <div onclick="goToStep(2)" >
+              {% include 'components/button.html' with variant='primary' text='Continuar' %}
+            </div>
+          </div>
+        </div>
+
+        {#PASO 2: Registro de datos del beneficiario #}
+        <div id="step-2" class="step-content hidden">
+          <h2 class="text-2xl font-bold text-white mb-2">
+            Registrar Beneficiario
+          </h2>
+          <p class="text-gray-400 text-sm mb-6">
+            Complete los datos personales del beneficiario
+          </p>
+
+          {#Errores generales #}
+          {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}
+          <p class="text-red-400 text-sm mb-4">{{ error }}</p>
+          {% endfor %}
+          {% endif %}
+
+          <div class="space-y-5">
+            {# Nombre y Correo #}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {% include 'components/input.html' with field=form.name label='Nombre completo' required=True %}
+              {% include 'components/input.html' with field=form.email label='Correo electrónico' required=True %}
+            </div>
+
+            {#Documento y Contraseña #}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {% include 'components/input.html' with field=form.document label='Número de documento' required=True %}
+              {% include 'components/input.html' with field=form.password1 label='Contraseña' required=True %}
+              {% include 'components/input.html' with field=form.password2 label='Confirmar contraseña' required=True %}
+            </div>
+
+            {#Telefono y Dirección #}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {% include 'components/input.html' with field=form.phone label='Teléfono' required=True %}
+              {% include 'components/input.html' with field=form.address label='Dirección' required=True %}
+            </div>
+
+            {#Fecha de nacimiento y estrato #}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {% include 'components/input.html' with field=form.date_of_birth label='Fecha de nacimiento' required=True %}
+              {% include 'components/input.html' with field=form.stratum label='Estrato' required=True %}
+            </div>
+          </div>
+
+          {#Aviso de datos #}
+          <p class="text-xs mt-6 leading-relaxed" style="color: #ADADFF;">
+            Cuando envíe este formulario, se recopilará automáticamente sus detalles,
+            como el nombre y la dirección de correo electrónico, gracias al tratamiento
+            de sus datos personales conforme a la Ley 1581 de 2012.
+          </p>
+
+          {#Botones Paso 2 #}
+          <div class="flex justify-center gap-3">
+            <div onclick="goToStep(1)">
+              {% include 'components/button.html' with variant='secondary' text='Atrás' %}
+            </div>
+            <div onclick="goToStep(3)" >
+              {% include 'components/button.html' with variant='primary' text='Continuar' %}
+            </div>
+          </div>
+        </div>
+
+        {# PASO 3: Confirmación #}
+        <div id="step-3" class="step-content hidden">
+          <h2 class="text-2xl font-bold text-white mb-2">
+            Confirmación de datos
+          </h2>
+          <p class="text-gray-400 text-sm mb-6">
+            Verifica que los datos sean correctos antes de enviar
+          </p>
+
+          {# Resumen de datos #}
+          <div id="summary" class="space-y-3 mb-8 p-6 rounded-xl" style="background: rgba(255,255,255,0.08);">
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+              <span class="text-gray-400 text-sm">Nombre</span>
+              <span id="sum-name" class="text-white text-sm font-medium"></span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+              <span class="text-gray-400 text-sm">Documento</span>
+              <span id="sum-document" class="text-white text-sm font-medium"></span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+              <span class="text-gray-400 text-sm">Correo</span>
+              <span id="sum-email" class="text-white text-sm font-medium"></span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+              <span class="text-gray-400 text-sm">Teléfono</span>
+              <span id="sum-phone" class="text-white text-sm font-medium"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400 text-sm">Dirección</span>
+              <span id="sum-address" class="text-white text-sm font-medium"></span>
+            </div>
+          </div>
+
+          {#Botones Paso 3 #}
+          <div class="flex justify-center gap-3">
+            <div onclick="goToStep(2)">
+              {% include 'components/button.html' with variant='secondary' text='Atrás' %}
+            </div>
+            <div>
+              {% include 'components/button.html' with variant='primary' text='Registrar Beneficiario' type='submit' %}
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+      {% if show_duplicate_modal %}
+      {% include 'components/modal.html' with tipo='warning' mensaje='El usuario con ese documento ya se encuentra registrado' %}
+    {% endif %}
+  </main>
+</div>
+
+
+</div>
+
+{#JavaScript: Control de pasos#}
+<script>
+  let currentStep = 1;
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Si Django regresó con errores en el form → saltar directo al paso 2
+    // sin pasar por las validaciones de checkboxes del paso 1
+    var errorDiv = document.querySelector('.text-red-400');
+    if (errorDiv) {
+        currentStep = 2;
+        document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('step-2').classList.remove('hidden');
+
+        // Marcar paso 1 como completado en el stepper
+        const c1 = document.getElementById('step-circle-1');
+        c1.style.background = '#E4EB60';
+        c1.style.color = '#1a1a1a';
+        c1.innerHTML = '✓';
+        c1.className = 'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
+        document.getElementById('step-label-1').style.color = '#E4EB60';
+
+        // Activar paso 2 visualmente
+        const c2 = document.getElementById('step-circle-2');
+        c2.style.background = '#5454E9';
+        c2.style.color = 'white';
+        document.getElementById('step-label-2').style.color = '#5454E9';
+
+        // Línea entre 1 y 2 verde
+        document.getElementById('step-line-1').style.background = '#E4EB60';
+    }
+});
+  function goToStep(step) {
+    // Validar paso 1: checkboxes obligatorios
+    if (currentStep === 1 && step === 2) {
+      const auth = document.querySelector('[name="data_authorization"]');
+      const ley = document.querySelector('[name="acepto_ley"]');
+      if (!auth || !auth.checked) {
+        alert('Debe autorizar el tratamiento de datos personales para continuar.');
+        return;
+      }
+      if (!ley || !ley.checked) {
+        alert('Debe aceptar el tratamiento según la Ley 1581 de 2012.');
+        return;
+      }
+    }
+
+    // Validar paso 2: campos obligatorios
+    if (currentStep === 2 && step === 3) {
+      const form = document.getElementById('register-form');
+      const name = form.querySelector('[name="name"]')?.value.trim();
+      const doc = form.querySelector('[name="document"]')?.value.trim();
+      const email = form.querySelector('[name="email"]')?.value.trim();
+      const tel = form.querySelector('[name="phone"]')
+      const p1 = form.querySelector('[name="password1"]')?.value;
+      const p2 = form.querySelector('[name="password2"]')?.value;
+
+      if (!name || !doc || !email || !tel) {
+        alert('Complete los campos obligatorios: Nombre, Telefono, Documento y Correo.');
+        return;
+      }
+      if (!p1 || !p2) {
+        alert('Debe ingresar y confirmar la contraseña.');
+        return;
+      }
+      if (p1 !== p2) {
+        alert('Las contraseñas no coinciden.');
+        return;
+      }
+    }
+
+    // Ocultar todos los pasos
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('step-' + step).classList.remove('hidden');
+
+    // Actualizar stepper visual
+    for (let i = 1; i <= 3; i++) {
+      const circle = document.getElementById('step-circle-' + i);
+      const label = document.getElementById('step-label-' + i);
+
+      if (i < step) {
+        circle.style.background = '#E4EB60';
+        circle.style.color = '#1a1a1a';
+        circle.innerHTML = '✓';
+        circle.className = 'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
+        label.style.color = '#E4EB60';
+      } else if (i === step) {
+        circle.style.background = '#5454E9';
+        circle.style.color = 'white';
+        circle.innerHTML = i;
+        circle.className = 'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
+        label.style.color = '#5454E9';
+      } else {
+        circle.style.background = '';
+        circle.style.color = '';
+        circle.className = 'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-gray-700 text-gray-400';
+        label.style.color = '';
+        label.className = 'mt-2 text-xs font-semibold text-gray-500';
+      }
+    }
+
+    // Actualizar líneas
+    for (let i = 1; i <= 2; i++) {
+      const line = document.getElementById('step-line-' + i);
+      if (i < step) {
+        line.style.background = '#E4EB60';
+      } else {
+        line.style.background = '';
+        line.className = 'w-20 h-0.5 bg-gray-600 mb-10 mx-2';
+      }
+    }
+
+    // Llenar resumen en paso 3
+    if (step === 3) {
+      fillSummary();
+    }
+
+    currentStep = step;
+  }
+
+  function fillSummary() {
+    const form = document.getElementById('register-form');
+    document.getElementById('sum-name').textContent = form.querySelector('[name="name"]')?.value || '-';
+    document.getElementById('sum-document').textContent = form.querySelector('[name="document"]')?.value || '-';
+    document.getElementById('sum-email').textContent = form.querySelector('[name="email"]')?.value || '-';
+    document.getElementById('sum-phone').textContent = form.querySelector('[name="phone"]')?.value || '-';
+    document.getElementById('sum-address').textContent = form.querySelector('[name="address"]')?.value || '-';
+  }
+  // Ocultar error cuando el usuario empieza a escribir
+  document.querySelectorAll('input, select, textarea').forEach(input => {
+    input.addEventListener('input', function () {
+      const error = this.parentElement.querySelector('.text-red-400');
+      if (error) error.style.display = 'none';
+    });
+  });
+</script>
+{% endblock content %}

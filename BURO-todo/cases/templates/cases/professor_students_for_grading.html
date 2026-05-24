@@ -1,0 +1,125 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+  <!-- Header - Mismo estilo que student_load.html -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Módulo académico</p>
+      <h1 class="mt-1 text-2xl font-bold text-gray-900">Calificar Estudiante</h1>
+      <p class="mt-1 text-sm text-gray-500">Selecciona un estudiante para registrar notas académicas y observaciones.</p>
+    </div>
+  </div>
+
+  <!-- Backend: Conexión a lógica existente de AcademicActionFormView (register_academic_action.html) -->
+  <!-- Esta vista lista los casos del profesor para acceso fácil al formulario de calificación -->
+
+  {% if cases_by_room %}
+    <!-- Casos agrupados por sala jurídica -->
+    {% for room_name, cases_list in cases_by_room.items %}
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">{{ room_name }}</h2>
+        <p class="mt-1 text-xs text-gray-500">{{ cases_list|length }} estudiante{% if cases_list|length != 1 %}s{% endif %} disponible{% if cases_list|length != 1 %}s{% endif %}</p>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        {% for item in cases_list %}
+        <div class="px-6 py-4 flex items-center justify-between gap-4 hover:bg-gray-50 transition">
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-semibold text-gray-900">{{ item.student_name }}</h3>
+            <p class="mt-1 text-xs text-gray-500">
+              Caso #{{ item.case.id }}
+              {% if item.action_count > 0 %}
+                · {{ item.action_count }} acción{% if item.action_count != 1 %}es{% endif %}
+              {% else %}
+                · Sin acciones
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Promedio con icono coloreado -->
+          <div class="flex items-center gap-4">
+            <div class="text-center">
+              <p class="text-xs text-gray-500 mb-1">Promedio</p>
+              <div class="flex items-center gap-2">
+                {% if item.partial_grade >= 3.5 %}
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: #f0fdf4;">
+                  <svg class="h-4 w-4" fill="none" stroke="#16a34a" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <span class="text-sm font-bold text-green-600">{{ item.partial_grade }}</span>
+                {% elif item.partial_grade >= 2.5 %}
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: #fff7ed;">
+                  <svg class="h-4 w-4" fill="none" stroke="#ea580c" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <span class="text-sm font-bold text-orange-600">{{ item.partial_grade }}</span>
+                {% elif item.partial_grade > 0 %}
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: #fce7f3;">
+                  <svg class="h-4 w-4" fill="none" stroke="#ec4899" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 2v2m0 2v2M7 11h2m0-4h2m0-4h2m0-4h2m0-4h2m0-4h2"/>
+                  </svg>
+                </div>
+                <span class="text-sm font-bold text-pink-600">{{ item.partial_grade }}</span>
+                {% else %}
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: #f3f4f6;">
+                  <svg class="h-4 w-4" fill="none" stroke="#9ca3af" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <span class="text-sm font-bold text-gray-400">--</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <a href="{{ item.form_url }}" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 whitespace-nowrap">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Calificar
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <!-- Sin casos activos -->
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-12 text-center">
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background-color: #f3f4f6;">
+      <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <h3 class="mt-4 text-lg font-semibold text-gray-900">Sin estudiantes para calificar</h3>
+    <p class="mt-1 text-sm text-gray-500">No tienes casos activos asignados en este momento. Los casos activos aparecerán aquí.</p>
+  </div>
+  {% endif %}
+
+  <!-- Información de ayuda - Estilo tarjeta como las métricas -->
+  {% if cases_by_room %}
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: #ede9fe;">
+        <svg class="h-5 w-5" fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900">Cómo calificar</h3>
+        <ul class="mt-2 space-y-1 text-sm text-gray-600">
+          <li>✓ Haz clic en <strong>"Calificar"</strong> para acceder al formulario de registro</li>
+          <li>✓ Selecciona el <strong>tipo de acción</strong>: Entrega de documento, Seguimiento o Asistencia a cita</li>
+          <li>✓ Ingresa una <strong>nota entre 0.0 y 5.0</strong> según el desempeño del estudiante</li>
+          <li>✓ El <strong>promedio se recalcula automáticamente</strong> con cada nueva acción registrada</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock dashboard_content %}

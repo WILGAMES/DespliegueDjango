@@ -1,0 +1,80 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="rounded-3xl border border-slate-800 bg-slate-900/90 p-8 shadow-xl shadow-slate-950/20">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Configuración</p>
+            <h2 class="mt-2 text-3xl font-semibold text-white">Criterios de asignación</h2>
+        </div>
+        <div class="rounded-3xl bg-slate-800/80 px-4 py-3 text-sm text-slate-300">Administración de criterios</div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="rounded-2xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-500 bg-emerald-500/10 text-emerald-200{% elif message.tags == 'error' %}border-rose-500 bg-rose-500/10 text-rose-200{% else %}border-slate-700 bg-slate-800 text-slate-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'cases:update-assignment-criteria' %}" class="space-y-6">
+        {% csrf_token %}
+        <div class="grid gap-6 lg:grid-cols-2">
+            <div>
+                <label for="{{ form.max_cases_per_professor.id_for_label }}" class="block text-sm font-medium text-slate-300 mb-2">{{ form.max_cases_per_professor.label }}</label>
+                {{ form.max_cases_per_professor }}
+                {% if form.max_cases_per_professor.help_text %}
+                    <p class="text-slate-500 text-sm mt-2">{{ form.max_cases_per_professor.help_text }}</p>
+                {% endif %}
+                {% if form.max_cases_per_professor.errors %}
+                    <p class="text-red-400 text-xs mt-1.5">{{ form.max_cases_per_professor.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-800/80 px-4 py-4">
+                    {{ form.prioritize_same_room }}
+                    <div>
+                        <p class="text-sm font-medium text-white">{{ form.prioritize_same_room.label }}</p>
+                        <p class="text-slate-500 text-sm">{{ form.prioritize_same_room.help_text }}</p>
+                        {% if form.prioritize_same_room.errors %}
+                            <p class="text-red-400 text-xs mt-1.5">{{ form.prioritize_same_room.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-800/80 px-4 py-4">
+                    {{ form.balance_workload }}
+                    <div>
+                        <p class="text-sm font-medium text-white">{{ form.balance_workload.label }}</p>
+                        <p class="text-slate-500 text-sm">{{ form.balance_workload.help_text }}</p>
+                        {% if form.balance_workload.errors %}
+                            <p class="text-red-400 text-xs mt-1.5">{{ form.balance_workload.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-800/80 px-4 py-4">
+                    {{ form.active }}
+                    <div>
+                        <p class="text-sm font-medium text-white">{{ form.active.label }}</p>
+                        <p class="text-slate-500 text-sm">{{ form.active.help_text }}</p>
+                        {% if form.active.errors %}
+                            <p class="text-red-400 text-xs mt-1.5">{{ form.active.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="rounded-2xl border border-rose-500 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-yellow-400 px-6 py-4 font-semibold text-slate-950 transition hover:bg-yellow-300">Guardar configuración</button>
+    </form>
+</div>
+{% endblock dashboard_content %}

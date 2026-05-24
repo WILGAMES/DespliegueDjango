@@ -1,0 +1,51 @@
+from django.urls import path
+from .views import (
+    LegalReportView,    
+    RegisterBeneficiaryView,
+    DashboardView,
+    CaseCreateView,
+    CaseListView,
+    BeneficiaryCaseStatusView,
+    StudentAcademicHistoryView,
+    StudentHistoryPDFView,
+    LoginView,
+    LogoutView,
+    OTPVerifyView,
+    RegisterStudentView,
+    RegisterProfessorView, 
+    RequestDataDeletionView,       
+    DataDeletionSuccessView,  
+)
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('secretary/legal-report/', LegalReportView.as_view(), name='legal-report'),
+    path('', DashboardView.as_view(), name='dashboard'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('login/otp/', OTPVerifyView.as_view(), name='otp-verify'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+    path('dashboard/beneficiary/', views.beneficiary_dashboard_view, name='beneficiary-dashboard'),
+    path('dashboard/student/', views.student_dashboard_view, name='student-dashboard'),
+    path('dashboard/professor/', views.professor_dashboard_view, name='professor-dashboard'),
+    path('dashboard/secretary/', views.secretary_dashboard_view, name='secretary-dashboard'),
+    path('cases/new/', CaseCreateView.as_view(), name='case-create'),
+    path('cases/', CaseListView.as_view(), name='case-list'),
+    path('beneficiary/cases/', BeneficiaryCaseStatusView.as_view(), name='beneficiary-cases'),
+    path('student/history/', StudentAcademicHistoryView.as_view(), name='student-history'),
+    path('student/history/pdf/', StudentHistoryPDFView.as_view(), name='student-history-pdf'),
+    path('register/beneficiary/', RegisterBeneficiaryView.as_view(), name='register-beneficiary'),
+    path('register/student/', RegisterStudentView.as_view(), name='register-student'),
+    path("secretary/register/", views.register_secretaria, name="register_secretaria"),
+    path("secretary/register/success/", views.secretaria_success, name="secretary_success"),
+    path('register/professor/', RegisterProfessorView.as_view(), name='register-professor'),
+    path('professor/load/', views.student_load_view, name='student-load'),
+    path('professor/auto-assign/', views.auto_assign_cases_view, name='auto-assign-cases'),
+    path('professor/auto-assign/results/', views.auto_assign_results_view, name='auto-assign-results'),
+    path('professor/metrics/', views.academic_metrics_view, name='academic-metrics'),
+    path('professor/dashboard/', views.academic_dashboard_view, name='academic-dashboard'),
+    path('secretary/statistics/', views.system_statistics_view, name='system-statistics'),
+    path('beneficiary/data-deletion/', RequestDataDeletionView.as_view(), name='data-deletion-request'),
+    path('beneficiary/data-deletion/success/', DataDeletionSuccessView.as_view(), name='data-deletion-success'),
+] 

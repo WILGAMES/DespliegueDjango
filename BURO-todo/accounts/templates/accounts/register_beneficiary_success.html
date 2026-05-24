@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+  {% include 'components/modal.html' with tipo='success' mensaje='Beneficiario registrado exitosamente' texto_boton='Continuar' url_boton='/accounts/login/' %}
+</div>
+{% endblock content %}

@@ -1,0 +1,197 @@
+{% extends 'reports/reports_base.html' %}
+{% block title %}Reporte {{ report.period_label }}{% endblock %}
+
+{% block reports_content %}
+<div class="space-y-6">
+
+  {# ── Encabezado + acciones de exportación ── #}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <nav class="flex items-center gap-2 text-sm text-slate-400 mb-2">
+        <a href="{% url 'reports:list' %}" class="hover:text-[#5454E9] transition-colors font-medium">Reportes</a>
+        <svg class="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-slate-700 font-medium">{{ report.period_label }}</span>
+      </nav>
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Reporte académico</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">{{ report.period_label }}</h1>
+      <p class="mt-0.5 text-sm text-slate-500">{{ report.date_from }} — {{ report.date_to }}</p>
+      <p class="mt-0.5 text-xs text-slate-400">
+        Generado el {{ report.generated_at|date:"d/m/Y \a \l\a\s H:i" }}
+        {% if report.generated_by %}por {{ report.generated_by.name }}{% else %}automáticamente{% endif %}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2 shrink-0">
+      <a href="{% url 'reports:export-pdf' report.pk %}"
+         class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 shadow-sm transition-colors">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Descargar PDF
+      </a>
+      <a href="{% url 'reports:export-csv' report.pk %}"
+         class="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 shadow-sm transition-colors">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Descargar Excel
+      </a>
+      <a href="{% url 'reports:list' %}"
+         class="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-gray-50 transition-colors">
+        ← Volver
+      </a>
+    </div>
+  </div>
+
+  {% with summary=report.report_data.summary %}
+
+  {% if summary.total_cases == 0 %}
+
+  {# ── Sin datos en el periodo ── #}
+  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+    <div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-lg bg-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+        <svg class="h-4 w-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-base font-semibold text-amber-800">No hay datos para el periodo seleccionado</p>
+        <p class="mt-0.5 text-sm text-amber-700">
+          No se encontraron casos académicos en el rango
+          <strong>{{ report.date_from }} — {{ report.date_to }}</strong>.
+        </p>
+        <a href="{% url 'reports:generate' %}"
+           class="mt-4 inline-block rounded-xl bg-amber-500 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors shadow-sm">
+          Intentar con otro periodo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+
+  {# ── Fila principal de métricas (estilo tarjetas Figma) ── #}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+    {# Total casos #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+        <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-slate-800">{{ summary.total_cases }}</p>
+      <p class="mt-0.5 text-sm text-slate-500">Total casos</p>
+    </div>
+
+    {# Casos activos #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div class="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center mb-3">
+        <svg class="h-5 w-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-slate-800">{{ summary.active_cases }}</p>
+      <p class="mt-0.5 text-sm text-slate-500">Casos activos</p>
+    </div>
+
+    {# Casos cerrados #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center mb-3">
+        <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-slate-800">{{ summary.closed_cases }}</p>
+      <p class="mt-0.5 text-sm text-slate-500">Casos cerrados</p>
+    </div>
+
+    {# Nota promedio — tarjeta destacada azul (como el Figma) #}
+    <div class="bg-[#5454E9] rounded-2xl shadow-sm p-5 text-white">
+      <p class="text-xs font-semibold uppercase tracking-wider text-blue-200 mb-3">Nota promedio</p>
+      <p class="text-3xl font-bold">{{ summary.avg_grade }}</p>
+      <p class="mt-0.5 text-sm text-blue-200">Periodo {{ report.period_label }}</p>
+    </div>
+
+  </div>
+
+  {# ── Métricas secundarias ── #}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p class="text-sm text-slate-500">Casos asignados</p>
+      <p class="mt-2 text-2xl font-bold text-slate-800">{{ summary.assigned_cases }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p class="text-sm text-slate-500">Carga promedio / estudiante</p>
+      <p class="mt-2 text-2xl font-bold text-slate-800">{{ summary.avg_load_per_student }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p class="text-sm text-slate-500">Tasa de resolución</p>
+      <p class="mt-2 text-2xl font-bold text-slate-800">
+        {{ summary.resolution_rate }}<span class="text-base font-medium text-slate-400">%</span>
+      </p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p class="text-sm text-slate-500">Tasa de asignación</p>
+      <p class="mt-2 text-2xl font-bold text-slate-800">
+        {{ summary.assignment_rate }}<span class="text-base font-medium text-slate-400">%</span>
+      </p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p class="text-sm text-slate-500">Acciones académicas</p>
+      <p class="mt-2 text-2xl font-bold text-slate-800">{{ summary.total_academic_actions }}</p>
+    </div>
+
+  </div>
+
+  {% endif %}
+  {% endwith %}
+
+  {# ── Desglose por sala jurídica ── #}
+  {% with breakdown=report.report_data.breakdown_by_room %}
+  {% if breakdown %}
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-slate-700">Desglose por sala jurídica</h2>
+    </div>
+    <div class="grid gap-px bg-gray-100 sm:grid-cols-2 lg:grid-cols-3">
+      {% for room in breakdown %}
+      <div class="bg-white p-5">
+        <h3 class="text-sm font-semibold text-slate-800 mb-3">{{ room.room_name }}</h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Total</span>
+            <span class="font-semibold text-slate-800">{{ room.total_cases }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Activos</span>
+            <span class="font-semibold text-orange-600">{{ room.active_cases }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Cerrados</span>
+            <span class="font-semibold text-green-600">{{ room.closed_cases }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endwith %}
+
+</div>
+{% endblock %}

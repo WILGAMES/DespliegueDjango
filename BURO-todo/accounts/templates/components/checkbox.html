@@ -1,0 +1,19 @@
+<label class="flex items-start gap-3 cursor-pointer group">
+    {% if django_field %}
+        {{ django_field }}
+    {% else %}
+        <input type="checkbox"
+               name="{{ name }}"
+               class="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+               {% if checked %}checked{% endif %}>
+    {% endif %}
+    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">
+        {{ label }}
+        {% if link_text %}
+            <a href="{{ link_url|default:'#' }}" class="ml-1" style="color: #E4EB60;">{{ link_text }}</a>
+        {% endif %}
+    </span>
+</label>
+{% if django_field.errors %}
+    <p class="text-red-400 text-xs mt-1.5 ml-7">{{ django_field.errors.0 }}</p>
+{% endif %}

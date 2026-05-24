@@ -1,0 +1,59 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="mt-2 text-2xl font-semibold text-white">Resumen de Vencimientos</h2>
+        <p class="mt-2 text-sm text-slate-400">Casos que requieren atención inmediata</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div class="overflow-x-auto">
+      <table class="w-full table-auto">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-400">ID Caso</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-400">Beneficiario</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-400">Días Restantes</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-400">Estado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700">
+          {% for case in critical_cases %}
+          <tr class="hover:bg-slate-800/50">
+            <td class="px-4 py-3 text-sm text-white">{{ case.number }}</td>
+            <td class="px-4 py-3 text-sm text-white">{{ case.beneficiary_name }}</td>
+            <td class="px-4 py-3 text-sm text-white">{{ case.days_remaining }}</td>
+            <td class="px-4 py-3">
+              {% if case.semaphore == 'red' %}
+                <span class="inline-flex items-center rounded-full bg-red-500/10 px-2 py-1 text-xs font-medium text-red-400">
+                  Urgente
+                </span>
+              {% elif case.semaphore == 'yellow' %}
+                <span class="inline-flex items-center rounded-full bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-400">
+                  Atención
+                </span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-400">
+                  Normal
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <a href="{% url 'accounts:student-history' %}" class="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        Continuar al Dashboard
+      </a>
+    </div>
+  </section>
+</div>
+{% endblock %}

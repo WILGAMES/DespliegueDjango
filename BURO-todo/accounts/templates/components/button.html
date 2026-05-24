@@ -1,0 +1,35 @@
+{% if variant == 'primary' %}
+<button type="{{ type|default:'button' }}"
+    class="flex items-center justify-center py-4 px-9  font-bold text-base transition-all duration-200"
+    style="background: #E4EB60; color: #1a1a1a; gap: 10px;"
+    onmouseover="this.style.background='#C0C73A'; this.style.boxShadow='0px 4px 4px rgba(0,0,0,0.25)'"
+    onmouseout="this.style.background='#E4EB60'; this.style.boxShadow='none'">
+    {{ text }}
+</button>
+
+{% elif variant == 'secondary' %}
+<button type="{{ type|default:'button' }}"
+    class="flex items-center justify-center py-4 px-9  font-bold text-base text-white transition-all duration-200"
+    style="background: #000000; gap: 10px;"
+    onmouseover="this.style.boxShadow='0px 4px 4px #E4EB60'"
+    onmouseout="this.style.boxShadow='none'">
+    {{ text }}
+</button>
+
+{% elif variant == 'accent' %}
+<button type="{{ type|default:'button' }}"
+    class="flex items-center justify-center py-4 px-9  font-bold text-base text-white transition-all duration-200"
+    style="background: #5454E9; gap: 10px;"
+    onmouseover="this.style.background='#ADADFF'; this.style.color='#1a1a1a'"
+    onmouseout="this.style.background='#5454E9'; this.style.color='white'">
+    {{ text }}
+</button>
+
+{% elif variant == 'disabled' %}
+<button type="button" disabled
+    class="flex items-center justify-center py-4 px-9  font-bold text-base cursor-not-allowed"
+    style="background: #BBBFC8; color: #1a1a1a; gap: 10px;">
+    {{ text }}
+</button>
+
+{% endif %}

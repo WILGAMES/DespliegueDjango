@@ -1,0 +1,35 @@
+{% load static %}
+
+{# Componente Note/Alert reutilizable #}
+{# Params:                                                        #}
+{#   title   (str)  — título en negrita, ej. "Nota importante:"   #}
+{#   message (str)  — texto descriptivo                            #}
+{#   icon    (str)  — ruta relativa al SVG (opcional)              #}
+
+<div class="flex  overflow-hidden mb-6"
+     style="border: 1px solid rgba(84, 84, 233, 0.3);">
+
+  {# ── Barra lateral con ícono ── #}
+  <div class="w-16 flex-shrink-0 flex items-center justify-center"
+       style="background: #5454E9;">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center"
+         style="background: #E4EB60;">
+      {% if icon %}
+        <img src="{% static 'accounts/icons/warning.svg' %}" alt="" class="w-5 h-5">
+      {% else %}
+        <span class="font-bold text-lg" style="color: #5454E9;">i</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Contenido ── #}
+  <div class="flex-1 px-5 py-4"
+       style="background: rgba(84, 84, 233, 0.1);">
+    <p class="text-sm font-bold mb-1" style="color: #E4EB60;">
+      {{ title }}
+    </p>
+    <p class="text-sm leading-relaxed" style="color: rgba(255, 255, 255, 0.75);">
+      {{ message }}
+    </p>
+  </div>
+</div>

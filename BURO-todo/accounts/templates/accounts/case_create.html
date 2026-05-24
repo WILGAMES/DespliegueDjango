@@ -1,0 +1,68 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+
+  {# ── Encabezado ──────────────────────────────────────────────────────── #}
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-gray-400">Registro de casos</p>
+      <h2 class="mt-1 text-2xl font-semibold text-gray-900">Nuevo caso</h2>
+    </div>
+    <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
+      Estado inicial: <span class="font-semibold text-gray-900">Pendiente</span>
+    </div>
+  </div>
+
+  <p class="mt-3 text-sm leading-relaxed text-gray-500">
+    Completa los datos del caso para registrarlo. La secretaria puede crear casos y luego ver la lista de casos registrados.
+  </p>
+
+  {# ── Formulario ──────────────────────────────────────────────────────── #}
+  <form method="post" class="mt-8 space-y-6">
+    {% csrf_token %}
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      {% include 'components/input.html' with label='Número de caso' required=True field=form.number %}
+      {% include 'components/input.html' with label='Beneficiario' required=True field=form.beneficiary %}
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+        Descripción <span class="text-red-500">*</span>
+      </label>
+      {{ form.description }}
+      {% if form.description.errors %}
+        <p class="text-red-500 text-xs mt-1.5">{{ form.description.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      {% include 'components/input.html' with label='Estudiante asignado' required=False field=form.assigned_student %}
+      {% include 'components/input.html' with label='Profesor asignado' required=False field=form.professor %}
+    </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#CBD5E1] mb-2">Descripción <span class="text-[#FACC15]">*</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <p class="text-[#F87171] text-xs mt-1.5">{{ form.description.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+    <button type="submit"
+            class="inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-gray-900 transition hover:opacity-80"
+            style="background-color: #E4EB60;">
+      Registrar caso
+    </button>
+  </form>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            {% include 'components/input.html' with label='Sala jurídica' required=True field=form.room %}
+            {% include 'components/input.html' with label='Fecha límite legal' required=True field=form.legal_deadline %}
+        </div>
+
+        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-[#FBBF24] px-6 py-4 font-semibold text-[#0F172A] transition hover:bg-[#FCD34D]">Registrar caso</button>
+    </form>
+</div>
+{% endblock dashboard_content %}
