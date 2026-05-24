@@ -22,7 +22,7 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']  # Solo desarrollo
+ALLOWED_HOSTS = ['*', 'desplieguedjango.onrender.com',]  # Solo desarrollo
 
 # --------------------------------------------------
 # CUSTOM USER MODEL
