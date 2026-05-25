@@ -3,156 +3,119 @@
 {% block dashboard_content %}
 <div class="space-y-6">
 
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-xs uppercase tracking-widest text-gray-400">Alertas</p>
+    <h2 class="mt-2 text-2xl font-semibold text-gray-900">Panel de alertas</h2>
+    <p class="mt-1 text-sm text-gray-500">Vencimientos críticos y reprogramaciones sin motivo.</p>
+  </section>
+
   {% if critical_cases %}
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
-    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Vencimientos</p>
-    <h3 class="mt-2 text-lg font-semibold text-white">Casos con vencimiento crítico</h3>
-    <p class="mt-1 text-sm text-slate-400">Casos con 7 días o menos antes de su fecha límite legal.</p>
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-xs uppercase tracking-widest text-gray-400">Vencimientos</p>
+    <h3 class="mt-2 text-lg font-semibold text-gray-900">Casos con vencimiento crítico</h3>
+    <p class="mt-1 text-sm text-gray-500">Casos con 7 días o menos antes de su fecha límite legal.</p>
 
     <div class="mt-4 space-y-3">
       {% for item in critical_cases %}
       <div class="rounded-xl border p-4
-        {% if item.days_remaining <= 1 %}border-red-500/40 bg-red-500/5
-        {% else %}border-yellow-500/40 bg-yellow-500/5{% endif %}">
+        {% if item.days_remaining <= 1 %}border-red-200 bg-red-50{% else %}border-yellow-200 bg-yellow-50{% endif %}">
 
         <div class="flex items-center justify-between">
-          <span class="text-xs text-slate-500">Vence: {{ item.case.legal_deadline|date:"d/m/Y" }}</span>
+          <span class="text-xs text-gray-400">Vence: {{ item.case.legal_deadline|date:"d/m/Y" }}</span>
           <span class="rounded-full px-3 py-0.5 text-xs font-semibold
-            {% if item.days_remaining <= 1 %}bg-red-500/20 text-red-300
-            {% else %}bg-yellow-500/20 text-yellow-300{% endif %}">
-            {% if item.days_remaining <= 0 %}
-              ⚠ Vencido
-            {% else %}
-              ⚠ {{ item.days_remaining }} día(s) restante(s)
-            {% endif %}
+            {% if item.days_remaining <= 1 %}bg-red-100 text-red-600{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+            {% if item.days_remaining <= 0 %}⚠ Vencido
+            {% else %}⚠ {{ item.days_remaining }} día(s) restante(s){% endif %}
           </span>
         </div>
 
         <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 text-sm">
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Caso</p>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Caso</p>
             <a href="{% url 'cases:case-detail' item.case.id %}"
-              class="text-white font-medium hover:text-indigo-400 transition">
+               class="font-medium" style="color:#5454E9;">
               #{{ item.case.id }} — {{ item.case.room.name }}
             </a>
           </div>
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Estudiante</p>
-            <p class="text-slate-300">
+            <p class="text-xs uppercase tracking-wider text-gray-400">Estudiante</p>
+            <p class="text-gray-700">
               {% if item.case.student %}{{ item.case.student.user.name }}
-              {% else %}<span class="text-red-300">Sin asignar</span>{% endif %}
+              {% else %}<span class="text-red-500">Sin asignar</span>{% endif %}
             </p>
           </div>
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Beneficiario</p>
-            <p class="text-slate-300">
+            <p class="text-xs uppercase tracking-wider text-gray-400">Beneficiario</p>
+            <p class="text-gray-700">
               {% if item.case.beneficiary %}{{ item.case.beneficiary.name }}
-              {% else %}<span class="text-red-300">Sin asignar</span>{% endif %}
+              {% else %}<span class="text-red-500">Sin asignar</span>{% endif %}
             </p>
           </div>
         </div>
-
       </div>
       {% endfor %}
     </div>
   </section>
   {% endif %}
 
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
-    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Auditoría</p>
-    <h2 class="mt-2 text-2xl font-semibold text-white">Alertas de reprogramación</h2>
-    <p class="mt-1 text-sm text-slate-400">
-      Reprogramaciones de citas sin motivo documentado en los últimos 30 días
-    </p>
-  </section>
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-xs uppercase tracking-widest text-gray-400">Auditoría</p>
+    <h3 class="mt-2 text-lg font-semibold text-gray-900">Reprogramaciones sin motivo</h3>
+    <p class="mt-1 text-sm text-gray-500">Últimos 30 días.</p>
 
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
     {% if alerts %}
-    <div class="space-y-4">
+    <div class="mt-4 space-y-4">
       {% for log in alerts %}
-      <div class="rounded-xl border border-red-500/40 bg-red-500/5 p-4">
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4">
 
-        <!-- Encabezado: Fecha y badge -->
         <div class="flex items-center justify-between">
-          <span class="text-xs text-slate-500">{{ log.changed_at|date:"d/m/Y H:i" }}</span>
-          <span class="rounded-full bg-red-500/20 px-3 py-0.5 text-xs font-semibold text-red-300">
+          <span class="text-xs text-gray-400">{{ log.changed_at|date:"d/m/Y H:i" }}</span>
+          <span class="rounded-full bg-red-100 px-3 py-0.5 text-xs font-semibold text-red-600">
             ⚠ Sin motivo
           </span>
         </div>
 
-        <!-- Información del caso y estudiante -->
         <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Caso</p>
-            <p class="text-white font-medium">
-              <a href="{% url 'cases:case-detail' log.appointment.case.id %}" class="hover:text-indigo-400 transition">
-                #{{ log.appointment.case.id }}
-              </a>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Caso</p>
+            <a href="{% url 'cases:case-detail' log.appointment.case.id %}"
+               class="font-medium hover:opacity-75 transition" style="color:#5454E9;">
+              #{{ log.appointment.case.id }}
+            </a>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Sala</p>
+            <p class="text-gray-900 font-medium">{{ log.appointment.case.room.name }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Estudiante</p>
+            <p class="text-gray-700">
+              {% if log.appointment.case.student %}{{ log.appointment.case.student.user.name }}
+              {% else %}<span class="text-red-500">Sin asignar</span>{% endif %}
             </p>
           </div>
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Sala</p>
-            <p class="text-white font-medium">{{ log.appointment.case.room.name }}</p>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Realizado por</p>
+            <p class="text-gray-900 font-medium">{{ log.changed_by.name }}</p>
           </div>
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Estudiante</p>
-            <p class="text-slate-300">
-              {% if log.appointment.case.student %}
-                {{ log.appointment.case.student.user.name }}
-              {% else %}
-                <span class="text-red-300">Sin asignar</span>
-              {% endif %}
-            </p>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Fecha anterior</p>
+            <p class="text-gray-600 font-mono">{{ log.previous_datetime|date:"d/m/Y H:i" }}</p>
           </div>
           <div>
-            <p class="text-slate-500 text-xs uppercase tracking-wider">Beneficiario</p>
-            <p class="text-slate-300">
-              {% if log.appointment.case.beneficiary %}
-                {{ log.appointment.case.beneficiary.name }}
-              {% else %}
-                <span class="text-red-300">Sin asignar</span>
-              {% endif %}
-            </p>
+            <p class="text-xs uppercase tracking-wider text-gray-400">Nueva fecha</p>
+            <p class="text-gray-900 font-medium font-mono">{{ log.new_datetime|date:"d/m/Y H:i" }}</p>
           </div>
         </div>
 
-        <!-- Detalles de reprogramación -->
-        <div class="mt-4 border-t border-red-500/20 pt-4">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
-            <div>
-              <p class="text-slate-500 text-xs uppercase tracking-wider">Realizado por</p>
-              <p class="text-white font-medium">{{ log.changed_by.name }}</p>
-            </div>
-            <div>
-              <p class="text-slate-500 text-xs uppercase tracking-wider">Rol</p>
-              <p class="text-slate-300">
-                {% if log.changed_by.role %}
-                  {{ log.changed_by.role.name }}
-                {% else %}
-                  Sistema
-                {% endif %}
-              </p>
-            </div>
-            <div>
-              <p class="text-slate-500 text-xs uppercase tracking-wider">Fecha anterior</p>
-              <p class="text-slate-300 font-mono">{{ log.previous_datetime|date:"d/m/Y H:i" }}</p>
-            </div>
-            <div>
-              <p class="text-slate-500 text-xs uppercase tracking-wider">Nueva fecha</p>
-              <p class="text-white font-medium font-mono">{{ log.new_datetime|date:"d/m/Y H:i" }}</p>
-            </div>
-          </div>
+        <div class="mt-4 rounded-lg bg-white border border-red-100 p-3">
+          <p class="text-xs uppercase tracking-wider text-gray-400">Motivo</p>
+          <p class="mt-1 text-red-600 italic text-sm">Sin motivo registrado</p>
         </div>
 
-        <!-- Motivo: siempre "Sin motivo registrado" -->
-        <div class="mt-4 rounded-lg bg-slate-800/50 p-3">
-          <p class="text-slate-500 text-xs uppercase tracking-wider">Motivo</p>
-          <p class="mt-1 text-red-300 italic text-sm">Sin motivo registrado</p>
-        </div>
-
-        <!-- Ver historial completo -->
         <div class="mt-4 flex justify-end">
-          <a href="{% url 'cases:appointment_history' log.appointment.id %}" class="text-indigo-400 hover:text-indigo-300 text-xs font-semibold">
+          <a href="{% url 'cases:appointment_history' log.appointment.id %}"
+             class="text-xs font-semibold hover:opacity-75 transition" style="color:#5454E9;">
             Ver historial completo →
           </a>
         </div>
@@ -161,11 +124,8 @@
       {% endfor %}
     </div>
 
-    <!-- Información de paginación -->
-    <div class="mt-6 border-t border-slate-700 pt-4">
-      <p class="text-xs text-slate-500">
-        Mostrando {{ alerts.count }} alerta(s) de los últimos 30 días
-      </p>
+    <div class="mt-6 border-t border-gray-100 pt-4">
+      <p class="text-xs text-gray-400">Mostrando {{ alerts.count }} alerta(s) de los últimos 30 días</p>
     </div>
 
     {% else %}
