@@ -341,9 +341,7 @@ def get_academic_dashboard(professor, room=None):
 
 
 def auto_assign_cases(professor_user):
-    # Delegate to the central assignment service so behaviour is consistent
-    from cases.services.assignment_service import assign_students_to_pending_cases
-
+    from cases.services import assign_students_to_pending_cases
     return assign_students_to_pending_cases(professor_user)
 
 def _normalize_period(period):

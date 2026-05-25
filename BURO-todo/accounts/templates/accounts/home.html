@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BURO | Consultorio Jurídico ICESI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>* { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-white text-gray-900">
+
+  {# ── Navbar ─────────────────────────────────────────────────────────── #}
+  <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+
+      {# Logo #}
+      <a href="/" class="flex items-center gap-2">
+        <img src="{% static 'accounts/img/marca/icesiWhite.svg' %}" alt="ICESI"
+             class="h-8" style="filter: invert(1) sepia(1) saturate(5) hue-rotate(200deg);">
+        <span class="text-xl font-bold tracking-tight" style="color:#5454E9;">| BURO</span>
+      </a>
+
+      {# Links decorativos #}
+      <nav class="hidden items-center gap-8 md:flex">
+        <span class="cursor-default text-sm font-medium text-gray-500">Inicio</span>
+        <span class="cursor-default text-sm font-medium text-gray-500">Servicios</span>
+        <span class="cursor-default text-sm font-medium text-gray-500">Agendar cita</span>
+        <span class="cursor-default text-sm font-medium text-gray-500">Estado de casos</span>
+        <span class="cursor-default text-sm font-medium text-gray-500">Contacto</span>
+      </nav>
+
+      {# CTA #}
+      <a href="{% url 'accounts:login' %}"
+         class="rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-900 transition hover:opacity-80"
+         style="background-color:#E4EB60;">
+        Iniciar sesión
+      </a>
+    </div>
+  </header>
+
+  {# ── Hero ────────────────────────────────────────────────────────────── #}
+  <section class="mx-auto max-w-7xl px-6 py-16 lg:py-24">
+    <div class="grid items-center gap-12 lg:grid-cols-2">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest" style="color:#5454E9;">Universidad ICESI</p>
+        <h1 class="mt-3 text-4xl font-bold leading-tight text-gray-900 lg:text-5xl">
+          Consultorio<br>Jurídico ICESI
+        </h1>
+        <p class="mt-5 text-base leading-relaxed text-gray-600">
+          El Consultorio Jurídico de la Universidad Icesi ofrece servicios de asistencia legal
+          gratuita a las personas de escasos recursos económicos que así lo solicitan. Asimismo,
+          busca la formación integral de los estudiantes y el apoyo a la investigación en áreas
+          jurídicas y de las ciencias sociales desarrolladas por la Universidad.
+        </p>
+        <a href="{% url 'accounts:login' %}"
+           class="mt-8 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-gray-900 transition hover:opacity-80"
+           style="background-color:#E4EB60;">
+          Solicitar su cita
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="overflow-hidden rounded-3xl shadow-xl">
+        <div class="flex h-72 w-full items-center justify-center lg:h-96"
+             style="background: linear-gradient(135deg,#5454E9 0%,#3dbd7a 100%);">
+          <div class="text-center text-white px-8">
+            <svg class="mx-auto h-16 w-16 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+            </svg>
+            <p class="mt-4 text-lg font-semibold">Asistencia Jurídica Gratuita</p>
+            <p class="mt-1 text-sm opacity-80">Protegiendo tus derechos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Conoce más ──────────────────────────────────────────────────────── #}
+  <section class="bg-gray-50 py-16">
+    <div class="mx-auto max-w-7xl px-6">
+      <h2 class="text-2xl font-bold text-gray-900">Conoce más sobre el Consultorio Jurídico</h2>
+
+      <div class="mt-10 grid gap-8 lg:grid-cols-2">
+
+        {# Card 1 #}
+        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div class="flex h-40 items-center justify-center" style="background-color:#5454E9;">
+            <div class="text-center text-white px-6">
+              <p class="text-lg font-bold">¿Qué es un Consultorio Jurídico?</p>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-sm leading-relaxed text-gray-600">
+              Los Consultorios Jurídicos, en los términos de lo dispuesto en el artículo 2 de la
+              Ley 2113 de 2021, son escenarios de aprendizaje práctico de los estudiantes de Educación
+              Superior, en el cual los estudiantes de los programas de Derecho, bajo la supervisión,
+              la guía y la coordinación del personal docente y administrativo que apoya el ejercicio
+              académico, adquieren conocimientos, habilidades y valores éticos para el ejercicio de
+              la profesión de abogado, prestando el servicio obligatorio y gratuito de asistencia
+              jurídica a la población vulnerable.
+            </p>
+          </div>
+        </div>
+
+        {# Card 2 #}
+        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div class="flex h-40 items-center justify-center" style="background-color:#3dbd7a;">
+            <div class="text-center text-white px-6">
+              <p class="text-lg font-bold">¿Quiénes pueden acceder?</p>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-sm leading-relaxed text-gray-600">
+              Nuestros servicios están diseñados, en los términos del artículo 8 de la Ley 2113 de 2021,
+              para brindar asesoría y representación jurídica gratuita, así como también servicios de
+              litigio estratégico de interés público, todo ello en el marco de las competencias otorgadas
+              por el artículo 9 de la citada Ley, a personas desprotección constitucional especial,
+              a personas naturales que carezcan de medios económicos para contratar los servicios de un
+              profesional en Derecho, y en general a personas o grupos que, por sus circunstancias
+              especiales, se encuentren en condición de vulnerabilidad.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  {# ── Ubicación ───────────────────────────────────────────────────────── #}
+  <section class="py-16">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="grid items-start gap-10 lg:grid-cols-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest" style="color:#5454E9;">Encuéntranos</p>
+          <h2 class="mt-2 text-2xl font-bold text-gray-900">Nuestra ubicación</h2>
+          <div class="mt-6 space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                   style="background-color:#E4EB60;">
+                <svg class="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">Dirección</p>
+                <p class="mt-0.5 text-sm text-gray-500">Cra. 9 #39-49, Segundo Piso</p>
+                <p class="text-sm text-gray-500">Universidad Icesi – Facultad de Negocios y Economía</p>
+                <p class="text-sm text-gray-500">Cali, Valle del Cauca</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm h-64 bg-gray-100 flex items-center justify-center">
+          <p class="text-sm text-gray-400">Cra. 9 #39-49 · Cali, Valle del Cauca</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Footer ──────────────────────────────────────────────────────────── #}
+  <footer style="background-color:#1b1d42;" class="py-10 text-white">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="text-sm font-semibold">Política de Tratamiento de Datos Personales</p>
+          <p class="mt-2 max-w-xl text-xs leading-relaxed text-white/60">
+            Te invitamos a conocer nuestra Política de Tratamiento de Datos Personales, donde explicamos
+            de manera clara cómo recopilamos, usamos, protegemos y garantizamos la confidencialidad de tu
+            información. Tu privacidad es importante para nosotros, por eso queremos que tengas total
+            transparencia y confianza en el manejo de tus datos.
+          </p>
+          <button class="mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-900"
+                  style="background-color:#E4EB60;" disabled>
+            Consúltala aquí
+          </button>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-white/40">© 2026 Universidad ICESI</p>
+          <p class="text-xs text-white/40">Consultorio Jurídico BURO</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -12,9 +12,23 @@ from .views import (
     StudentDeadlineSummaryView,
     ProfessorCasesView,
     ProfessorDeadlineSummaryView,
+    ApplySanctionView,                  
+    StudentSanctionsHistoryView,        
     ProfessorStudentsForGradingView,
     assignment_criteria_view,
     update_assignment_criteria_view,
+    email_recipients,
+    send_case_email,
+    communication_history,
+    compose_case_email,
+    professor_appointment_alerts,
+    professor_appointment_alerts_count,
+    retry_failed_notification,
+    professor_cases_page,
+    professor_inbox,
+    professor_notifications_count,
+    secretary_reminders_dashboard,
+    StudentsListForSanctionsView,
 )
 
 app_name = 'cases'
@@ -59,5 +73,77 @@ urlpatterns = [
         'appointments/<int:appointment_id>/history/',
         appointment_history,
         name='appointment_history',
+    ),
+    path(
+        '<int:case_id>/email/recipients/',
+        email_recipients,
+        name='email_recipients',
+    ),
+    path(
+        '<int:case_id>/email/send/',
+        send_case_email,
+        name='send_case_email',
+    ),
+    path(
+        '<int:case_id>/email/history/',
+        communication_history,
+        name='communication_history',
+    ),
+    path(
+        '<int:case_id>/email/compose/',
+        compose_case_email,
+        name='compose_case_email',
+    ),
+    path(
+        'professor-alerts/',
+        professor_appointment_alerts,
+        name='professor_appointment_alerts',
+    ),
+    path(
+        'professor-alerts/count/',
+        professor_appointment_alerts_count,
+        name='professor_appointment_alerts_count',
+    ),
+    path(
+        '<int:case_id>/failed-notifications/<int:log_id>/retry/',
+        retry_failed_notification,
+        name='retry_failed_notification',
+    ),
+    path(
+        'professor-cases/page/',
+        professor_cases_page,
+        name='professor_cases_page',
+    ),
+    
+    # PTCJMGA-XX: Sancion academica
+    path(
+        '<int:case_id>/apply-sanction/',
+        ApplySanctionView.as_view(),
+        name='apply-sanction'
+    ),
+    path(
+        'students/<int:student_id>/sanctions/',
+        StudentSanctionsHistoryView.as_view(),
+        name='student-sanctions-history'
+    ),
+    path(
+    'professor-notifications/count/',
+    professor_notifications_count,
+    name='professor_notifications_count',
+    ),
+    path(
+    'professor-inbox/',
+    professor_inbox,
+    name='professor_inbox',
+    ),
+    path(
+    'secretary/reminders/',
+    secretary_reminders_dashboard,
+    name='secretary_reminders_dashboard'),
+    # PTCJMGA-XX: Sanciones academicas - listado para sidebar del profesor
+    path(
+        'sanctions/students/',
+        StudentsListForSanctionsView.as_view(),
+        name='sanctions-list'
     ),
 ]

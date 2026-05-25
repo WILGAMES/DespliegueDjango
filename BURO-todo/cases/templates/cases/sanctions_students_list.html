@@ -1,0 +1,141 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+
+{# ── Saludo ─────────────────────────────────────────────────────────────── #}
+<div class="mb-7">
+  <h1 class="text-3xl font-bold tracking-tight" style="color: #1b1d42;">
+    Sanciones académicas
+  </h1>
+  <p class="mt-2 text-sm text-gray-500">
+    Seleccione un estudiante para ver su historial de sanciones académicas.
+  </p>
+</div>
+
+{# ── Mensajes flash ─────────────────────────────────────────────────────── #}
+{% if messages %}
+  <div class="mb-6 space-y-2">
+    {% for message in messages %}
+      <div class="rounded-xl p-4 border
+        {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700
+        {% elif message.tags == 'warning' %}bg-orange-50 border-orange-200 text-orange-700
+        {% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
+        <p class="text-sm font-medium">{{ message }}</p>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{# ── Card principal: tabla de estudiantes ──────────────────────────────── #}
+<section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+
+  {# Header de la tabla #}
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-sm font-semibold uppercase tracking-widest text-gray-400">
+      Estudiantes registrados
+    </p>
+    <span class="text-xs text-gray-400">
+      Total: <strong class="text-gray-700">{{ students|length }}</strong>
+    </span>
+  </div>
+
+  {% if students %}
+    {# Tabla #}
+    <div class="overflow-hidden rounded-xl border border-gray-100">
+      <table class="w-full">
+        <thead style="background-color: #F9FAFB;">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Estudiante
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Código
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Semestre
+            </th>
+            <th class="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Sanciones
+            </th>
+            <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Acción
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for student in students %}
+            <tr class="hover:bg-gray-50 transition-colors">
+
+              {# Nombre #}
+              <td class="px-5 py-4">
+                <p class="text-sm font-semibold text-gray-900">{{ student.name }}</p>
+              </td>
+
+              {# Código #}
+              <td class="px-5 py-4">
+                <p class="text-sm text-gray-600">
+                  {{ student.student_code|default:'—' }}
+                </p>
+              </td>
+
+              {# Semestre #}
+              <td class="px-5 py-4">
+                <p class="text-sm text-gray-600">
+                  {% if student.semester %}{{ student.semester }}°{% else %}—{% endif %}
+                </p>
+              </td>
+
+              {# Conteo de sanciones #}
+              <td class="px-5 py-4 text-center">
+                {% if student.sanctions_count > 0 %}
+                  <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
+                        style="background-color: #FED7AA; color: #9A3412;">
+                    ⚠ {{ student.sanctions_count }}
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
+                        style="background-color: #DCFCE7; color: #166534;">
+                    ✓ 0
+                  </span>
+                {% endif %}
+              </td>
+
+              {# Botón ver historial #}
+              <td class="px-5 py-4 text-right">
+                <a href="{% url 'cases:student-sanctions-history' student.id %}"
+                   class="inline-flex items-center gap-1 text-xs font-semibold transition-colors hover:opacity-70"
+                   style="color: #5454E9;">
+                  Ver historial
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              </td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    {# Estado vacío #}
+    <div class="py-12 text-center">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+        <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </div>
+      <p class="mt-4 text-sm font-medium text-gray-900">Sin estudiantes registrados</p>
+      <p class="mt-1 text-xs text-gray-500">No hay estudiantes para mostrar.</p>
+    </div>
+  {% endif %}
+
+</section>
+
+{# Nota informativa usando componente del equipo con variante light #}
+{% include 'components/note.html' with title='Información:' message='Las sanciones académicas se aplican desde el detalle del caso. Esta vista permite revisar el historial inmutable de sanciones de cada estudiante.' variant='light' %}
+
+{% endblock dashboard_content %}

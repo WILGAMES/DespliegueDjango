@@ -1,0 +1,82 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Mi sala</p>
+    <h2 class="mt-2 text-2xl font-semibold text-white">Casos activos</h2>
+    <p class="mt-1 text-sm text-slate-400">Casos asignados a tu sala jurídica.</p>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div id="cases-container" class="space-y-3">
+      <p class="text-sm text-slate-400">Cargando casos...</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  async function loadProfessorCases() {
+    const container = document.getElementById('cases-container');
+    try {
+      const response = await fetch('/cases/professor-cases/');
+      
+      if (!response.ok) {
+        container.innerHTML = '<p class="text-sm text-red-400">Error al cargar los casos.</p>';
+        return;
+      }
+
+      const cases = await response.json();
+
+      if (!cases || cases.length === 0) {
+        container.innerHTML = `
+          <div class="rounded-xl border border-slate-700 bg-slate-950/60 p-8 text-center">
+            <p class="text-slate-400 text-sm">No tienes casos activos en este momento.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = cases.map(c => `
+        <div class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/60 p-4
+          ${c.semaphore === 'red' ? 'border-red-500/40' : c.semaphore === 'yellow' ? 'border-yellow-500/40' : ''}">
+
+          <div class="flex items-center gap-4">
+            <!-- Semáforo -->
+            <span class="h-3 w-3 rounded-full flex-shrink-0
+              ${c.semaphore === 'red' ? 'bg-red-500' : c.semaphore === 'yellow' ? 'bg-yellow-400' : 'bg-green-500'}">
+            </span>
+
+            <div>
+              <p class="text-sm font-semibold text-white">
+                ${c.number || 'Caso ' + c.id}
+              </p>
+              <p class="mt-0.5 text-xs text-slate-400">
+                Estudiante: ${c.student_name || 'Sin asignar'} · 
+                Beneficiario: ${c.beneficiary || 'Sin asignar'}
+              </p>
+              <p class="mt-0.5 text-xs 
+                ${c.semaphore === 'red' ? 'text-red-400' : c.semaphore === 'yellow' ? 'text-yellow-400' : 'text-slate-500'}">
+                ${c.days_remaining <= 0 ? '⚠ Vencido' : c.days_remaining + ' día(s) restantes'}
+              </p>
+            </div>
+          </div>
+
+          <a href="/cases/${c.id}/"
+             class="rounded-lg bg-indigo-500/20 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition flex-shrink-0">
+            Ver detalle →
+          </a>
+
+        </div>
+      `).join('');
+
+    } catch (err) {
+      container.innerHTML = '<p class="text-sm text-red-400">Error de conexión.</p>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadProfessorCases);
+</script>
+{% endblock dashboard_content %}

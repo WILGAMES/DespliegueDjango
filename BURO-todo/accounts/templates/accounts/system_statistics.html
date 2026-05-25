@@ -2,58 +2,58 @@
 
 {% block dashboard_content %}
 <div class="space-y-6">
-    <section class="rounded-3xl border border-[#1D2A4F] bg-[#0B122B]/95 p-8 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+    <section class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Panel estadístico</p>
-                <h2 class="mt-2 text-3xl font-semibold text-[#F8FAFC]">Indicadores globales</h2>
+                <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Panel estadístico</p>
+                <h2 class="mt-2 text-3xl font-semibold text-gray-900">Indicadores globales</h2>
             </div>
-            <div class="rounded-3xl bg-[#112749]/90 px-5 py-3 text-sm font-semibold text-[#E2E8F0]">{{ role_name|default:'Rol desconocido'|capfirst }}</div>
+            <div class="rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-700">{{ role_name|default:'Rol desconocido'|capfirst }}</div>
         </div>
     </section>
 
     <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Total casos</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.total_cases }}</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Total casos</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.total_cases }}</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Casos activos</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.active_cases }}</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Casos activos</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.active_cases }}</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Casos asignados</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.assigned_cases }}</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Casos asignados</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.assigned_cases }}</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Carga promedio</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.avg_load_per_student }}</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Carga promedio</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.avg_load_per_student }}</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Tasa de resolución</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.resolution_rate }}%</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Tasa de resolución</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.resolution_rate }}%</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Tasa de asignación</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.assignment_rate }}%</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Tasa de asignación</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.assignment_rate }}%</p>
         </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm text-[#94A3B8]">Casos cerrados</p>
-            <p class="mt-4 text-3xl font-semibold text-[#F8FAFC]">{{ statistics.summary.closed_cases }}</p>
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Casos cerrados</p>
+            <p class="mt-4 text-3xl font-bold" style="color:#5454E9;">{{ statistics.summary.closed_cases }}</p>
         </article>
     </section>
 
     {% if statistics.breakdown_by_room %}
-    <section class="rounded-3xl border border-[#1D2A4F] bg-[#0B122B]/95 p-8 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
-        <h3 class="text-xl font-semibold text-[#F8FAFC]">Desglose por sala jurídica</h3>
+    <section class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-900">Desglose por sala jurídica</h3>
         <div class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {% for room in statistics.breakdown_by_room %}
-            <article class="rounded-3xl border border-[#12203C] bg-[#0E172A]/90 p-5">
-                <h4 class="text-lg font-semibold text-[#F8FAFC]">{{ room.room_name }}</h4>
-                <div class="mt-3 space-y-1 text-sm text-[#94A3B8]">
-                    <p>Total casos: <span class="text-[#F8FAFC]">{{ room.total_cases }}</span></p>
-                    <p>Activos: <span class="text-[#F8FAFC]">{{ room.active_cases }}</span></p>
-                    <p>Cerrados: <span class="text-[#F8FAFC]">{{ room.closed_cases }}</span></p>
+            <article class="rounded-xl border border-gray-100 bg-gray-50 p-5">
+                <h4 class="text-lg font-semibold text-gray-900">{{ room.room_name }}</h4>
+                <div class="mt-3 space-y-1 text-sm text-gray-500">
+                    <p>Total casos: <span class="font-semibold text-gray-700">{{ room.total_cases }}</span></p>
+                    <p>Activos: <span class="font-semibold text-gray-700">{{ room.active_cases }}</span></p>
+                    <p>Cerrados: <span class="font-semibold text-gray-700">{{ room.closed_cases }}</span></p>
                 </div>
             </article>
             {% endfor %}

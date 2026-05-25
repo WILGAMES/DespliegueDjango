@@ -21,13 +21,36 @@
     {# ── Iconos + menú usuario ─────────────────────────────────────────── #}
     <div class="flex items-center gap-5 text-white">
 
-      {# Mensajes — sin funcionalidad aún #}
+      {# Mensajes — bandeja del profesor #}
+      {% if request.user.professor_profile %}
+      <a href="/cases/professor-inbox/"
+        class="opacity-80 hover:opacity-100 transition-opacity"
+        title="Bandeja de mensajes">
+        <img src="{% static 'accounts/icons/message.svg' %}" alt="Mensajes"
+            class="h-5 w-5" style="filter:brightness(0) invert(1);">
+      </a>
+      {% else %}
       <button class="opacity-60 cursor-default" title="Mensajes (no disponible)" disabled>
         <img src="{% static 'accounts/icons/message.svg' %}" alt="Mensajes"
-             class="h-5 w-5" style="filter:brightness(0) invert(1);">
+            class="h-5 w-5" style="filter:brightness(0) invert(1);">
       </button>
+      {% endif %}
 
-      {# Notificaciones #}
+      {# Campana única — comportamiento según rol #}
+      {% if request.user.professor_profile %}
+      <div class="relative">
+        <a href="/cases/professor-alerts/"
+           class="opacity-80 hover:opacity-100 transition-opacity block"
+           title="Notificaciones">
+          <img src="{% static 'accounts/icons/campaing.svg' %}" alt="Notificaciones"
+               class="h-5 w-5" style="filter:brightness(0) invert(1);">
+        </a>
+        <span id="alerts-badge"
+              class="hidden absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] bg-red-500
+                     rounded-full text-[10px] flex items-center justify-center text-white font-bold px-0.5 leading-none">
+        </span>
+      </div>
+      {% else %}
       <div class="relative">
         <button id="notif-btn" class="opacity-80 hover:opacity-100 transition-opacity"
                 title="Notificaciones">
@@ -40,6 +63,7 @@
           0
         </span>
       </div>
+      {% endif %}
 
       <div class="w-px h-5 bg-white/30"></div>
 
@@ -88,40 +112,46 @@
 </nav>
 
 <script>
-  (function () {
-    const btn      = document.getElementById('navbar-user-menu-btn');
-    const dropdown = document.getElementById('navbar-user-dropdown');
-    const chevron  = document.getElementById('navbar-user-chevron');
+  const navBtn      = document.getElementById('navbar-user-menu-btn');
+  const navDropdown = document.getElementById('navbar-user-dropdown');
+  const navChevron  = document.getElementById('navbar-user-chevron');
 
-    btn.addEventListener('click', function (e) {
+  if (navBtn) {
+    navBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const isOpen = !dropdown.classList.contains('hidden');
-      dropdown.classList.toggle('hidden', isOpen);
-      if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+      navDropdown.classList.toggle('hidden');
+      navChevron.style.transform = navDropdown.classList.contains('hidden')
+        ? '' : 'rotate(180deg)';
     });
+  }
 
-    document.addEventListener('click', function (e) {
-      if (!document.getElementById('navbar-user-menu-wrapper').contains(e.target)) {
-        dropdown.classList.add('hidden');
-        if (chevron) chevron.style.transform = '';
-      }
-    });
-
-    
-    try {
-      fetch("{% url 'notifications:failed-list' %}", { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (!data) return;
-          const count = (data.failed_notifications || []).length;
-          if (count > 0) {
-            const badge = document.getElementById('notif-badge');
-            badge.textContent = count > 9 ? '9+' : count;
-            badge.classList.remove('hidden');
-            badge.classList.add('flex');
-          }
-        })
-        .catch(() => {});
-    } catch(e) {}
-  })();
+  document.addEventListener('click', function (e) {
+    const wrapper = document.getElementById('navbar-user-menu-wrapper');
+    if (wrapper && navDropdown && !wrapper.contains(e.target)) {
+      navDropdown.classList.add('hidden');
+      if (navChevron) navChevron.style.transform = '';
+    }
+  });
 </script>
+
+{% if request.user.professor_profile %}
+<script>
+  async function loadAlertsCount() {
+    try {
+      const response = await fetch("/cases/professor-notifications/count/");
+      const data     = await response.json();
+      const badge    = document.getElementById('alerts-badge');
+      if (data.count > 0) {
+        badge.textContent = data.count > 99 ? '99+' : data.count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    } catch (err) {
+      console.error('Error cargando notificaciones:', err);
+    }
+  }
+  loadAlertsCount();
+  setInterval(loadAlertsCount, 5 * 60 * 1000);
+</script>
+{% endif %}

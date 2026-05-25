@@ -32,4 +32,13 @@
     {{ text }}
 </button>
 
+{% elif variant == 'danger' %}
+<button type="{{ type|default:'button' }}"
+    class="flex items-center justify-center py-4 px-9 font-bold text-base text-white transition-all duration-200"
+    style="background: #EA580C; gap: 10px;"
+    onmouseover="this.style.background='#C2410C'; this.style.boxShadow='0px 4px 4px rgba(0,0,0,0.25)'"
+    onmouseout="this.style.background='#EA580C'; this.style.boxShadow='none'">
+    {{ text }}
+</button>
+
 {% endif %}

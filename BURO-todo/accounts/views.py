@@ -71,15 +71,10 @@ class DashboardView(View):
                 {'title': 'Registrar caso nuevo', 'description': 'Crea un caso con datos del beneficiario y estado inicial.', 'link': '/accounts/cases/new/', 'icon': '📁'},
                 {'title': 'Ver casos', 'description': 'Consulta la lista de casos registrados y su estado.', 'link': '/accounts/cases/', 'icon': '📊'},
                 {'title': 'Estadísticas del sistema', 'description': 'Genera indicadores globales del rendimiento académico.', 'link': '/accounts/secretary/statistics/', 'icon': '📈'},
+                {'title': 'Recordatorios de citas','description': 'Monitorea el estado de los recordatorios automáticos.','link':'/cases/secretary/reminders/'},            
             ]
         elif role_name.lower() in ['student', 'estudiante']:
-            cards = [
-                {'label': 'Historial académico', 'value': '10 registros', 'link': '/accounts/student/history/'},
-                {'label': 'Filtrar por año', 'value': 'UI listo', 'link': '/accounts/student/history/'},
-            ]
-            quick_actions = [
-                {'title': 'Revisar historial', 'description': 'Consulta tus notas, docentes y estado de cada periodo.', 'link': '/accounts/student/history/'},
-            ]
+            return redirect('accounts:student-dashboard')
         elif role_name.lower() in ['beneficiary', 'beneficiario']:
             beneficiary = request.user if isinstance(request.user, Beneficiary) else None
             if beneficiary is None:
@@ -107,13 +102,31 @@ class DashboardView(View):
         elif role_name.lower() in ['profesor', 'professor']:
             cards = [
                 {'label': 'Gestión académica', 'value': 'Ver', 'link': '/accounts/professor/load/'},
-                {'label': 'Métricas', 'value': 'Ver', 'link': '/accounts/professor/metrics/'},
+                {'label': 'Métricas',          'value': 'Ver', 'link': '/accounts/professor/metrics/'},
             ]
             quick_actions = [
                 # Backend existente: formulario completo de calificación en register_academic_action.html
                 {'title': 'Calificar estudiante', 'description': 'Registra notas y observaciones académicas para tus estudiantes.', 'link': '/cases/professor-students-for-grading/'},
-                {'title': 'Supervisar carga académica', 'description': 'Consulta carga por estudiante y ejecuta asignación automática.', 'link': '/accounts/professor/load/'},
-                {'title': 'Revisar resultados de asignación', 'description': 'Visualiza qué casos fueron asignados y a quién.', 'link': '/accounts/professor/auto-assign/results/'},
+                {
+                    'title':       'Supervisar carga académica',
+                    'description': 'Consulta carga por estudiante y ejecuta asignación automática.',
+                    'link':        '/accounts/professor/load/',
+                },
+                {
+                    'title':       'Mis casos',
+                    'description': 'Ver todos los casos activos de tu sala.',
+                    'link':        '/cases/professor-cases/page/',
+                },
+                {
+                    'title':       'Alertas de reprogramación',
+                    'description': 'Revisa citas reprogramadas sin motivo documentado.',
+                    'link':        '/cases/professor-alerts/',
+                },
+                {
+                    'title':       'Revisar resultados de asignación',
+                    'description': 'Visualiza qué casos fueron asignados y a quién.',
+                    'link':        '/accounts/professor/auto-assign/results/',
+                },
             ]
         else:
             cards = [
@@ -570,12 +583,18 @@ def student_load_view(request):
 @login_required
 def auto_assign_cases_view(request):
     """
-    Endpoint para activar la asignación automática. 
-    Retorna JSON con los casos asignados.
+    Activa la asignación automática de casos y redirige a la vista de resultados.
+    Si la petición es AJAX devuelve JSON; si es un form normal redirige.
     """
     validate_professor(request.user)
-    if request.method == 'POST':
-        assigned = auto_assign_cases(request.user)
+
+    if request.method != 'POST':
+        return redirect('accounts:student-load')
+
+    assigned = auto_assign_cases(request.user)
+
+    # Respuesta AJAX (llamada desde JavaScript)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         results = [
             {
                 'id': c.id,
@@ -586,7 +605,13 @@ def auto_assign_cases_view(request):
             } for c in assigned
         ]
         return JsonResponse({'assigned_cases': results}, status=200)
-    return JsonResponse({'error': 'Method not allowed. Use POST.'}, status=405)
+
+    # Respuesta form normal — redirigir a la página de resultados
+    if assigned:
+        messages.success(request, f'Se asignaron {len(assigned)} caso(s) automáticamente.')
+    else:
+        messages.info(request, 'No hay casos pendientes para asignar en este momento.')
+    return redirect('accounts:auto-assign-results')
 
 
 @login_required
@@ -689,7 +714,7 @@ def student_dashboard_view(request):
     student_profile = request.user.student_profile
     excluded_statuses = ['Cerrado', 'Cancelado', 'Finalizado', 'closed', 'cancelled', 'finalizado']
     active_assigned_cases = (
-        request.user.assigned_cases
+        student_profile.assigned_cases
         .exclude(status__in=excluded_statuses)
         .select_related('professor__user', 'room')
         .order_by('-created_at')

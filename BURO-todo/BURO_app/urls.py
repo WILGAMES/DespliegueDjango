@@ -17,17 +17,19 @@ Including another URLconf
 from django.urls import include
 from django.contrib import admin
 from django.urls import path
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from accounts.views import academic_dashboard_view, custom_404_view
 from cases.views import academic_action_traceability_view
 
 handler404 = custom_404_view
 
-def home_redirect(request):
-    return redirect('accounts:login')
+def home_view(request):
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+    return render(request, 'accounts/home.html')
 
 urlpatterns = [
-    path('', home_redirect, name='home'),
+    path('', home_view, name='home'),
     path('admin/', admin.site.urls),
     path('academic-dashboard/', academic_dashboard_view, name='academic-dashboard-root'),
     path(

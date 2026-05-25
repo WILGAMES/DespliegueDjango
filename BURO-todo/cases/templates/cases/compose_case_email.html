@@ -1,0 +1,227 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Caso #{{ case.id }} · {{ case.room.name }}</p>
+    <h2 class="mt-2 text-2xl font-semibold text-white">Redactar correo institucional</h2>
+    <p class="mt-1 text-sm text-slate-400">
+      El correo se enviará desde la cuenta institucional y quedará registrado en la bitácora del caso.
+    </p>
+  </section>
+
+  <div id="error-banner" class="hidden rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+    <div class="flex items-center justify-between">
+      <span id="error-text"></span>
+      <button id="retry-btn" onclick="retryLastEmail()" class="ml-4 hidden rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition">
+        Reintentar
+      </button>
+    </div>
+  </div>
+  <div id="success-banner" class="hidden rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-300"></div>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+
+    <div class="space-y-6">
+
+      <!-- Destinatarios -->
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-300">
+          Destinatarios <span class="text-yellow-300">*</span>
+        </label>
+        <div id="recipients-container" class="space-y-2">
+          <p class="text-xs text-slate-500">Cargando destinatarios...</p>
+        </div>
+      </div>
+
+      <!-- Asunto -->
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-300">
+          Asunto <span class="text-yellow-300">*</span>
+        </label>
+        <input
+          id="subject"
+          type="text"
+          placeholder="Ej: Actualización del caso, Recordatorio de documentos..."
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+        >
+      </div>
+
+      <!-- Cuerpo -->
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-300">
+          Mensaje <span class="text-yellow-300">*</span>
+        </label>
+        <textarea
+          id="body"
+          rows="6"
+          placeholder="Redacte su mensaje aquí..."
+          class="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+        ></textarea>
+      </div>
+
+      <!-- Acciones -->
+      <div class="flex justify-end gap-3">
+        <a href="{% url 'cases:communication_history' case.id %}">
+          {% include 'components/button.html' with variant='secondary' text='Cancelar' %}
+        </a>
+        <div class="cursor-pointer" onclick="sendEmail()">
+          {% include 'components/button.html' with variant='primary' text='Enviar correo' %}
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const CASE_ID = parseInt("{{ case.id }}");
+  const RECIPIENTS_URL   = "{% url 'cases:email_recipients' case.id %}";
+  const SEND_URL         = "{% url 'cases:send_case_email' case.id %}";
+
+  // Guardar último intento de envío para poder reintentar
+  let lastEmailData = null;
+
+  // Carga los destinatarios al cargar la página
+  document.addEventListener('DOMContentLoaded', loadRecipients);
+
+  async function loadRecipients() {
+    const container = document.getElementById('recipients-container');
+    try {
+      const response = await fetch(RECIPIENTS_URL);
+      const data     = await response.json();
+
+      if (!data.recipients || data.recipients.length === 0) {
+        container.innerHTML = '<p class="text-xs text-red-400">No hay destinatarios con correo disponibles para este caso.</p>';
+        return;
+      }
+
+      container.innerHTML = data.recipients.map(r => `
+        <label class="flex items-center gap-3 cursor-pointer rounded-xl border border-slate-700 bg-slate-950/60 p-3">
+          <input type="checkbox" name="recipient" value="${r.email}" checked
+                 class="rounded text-indigo-500">
+          <div>
+            <p class="text-sm text-white font-medium">${r.name}</p>
+            <p class="text-xs text-slate-400">${r.email} · ${r.role}</p>
+          </div>
+        </label>
+      `).join('');
+
+    } catch (err) {
+      container.innerHTML = '<p class="text-xs text-red-400">Error al cargar destinatarios.</p>';
+    }
+  }
+
+  async function sendEmail() {
+    const subject    = document.getElementById('subject').value.trim();
+    const body       = document.getElementById('body').value.trim();
+    const checkboxes = document.querySelectorAll('[name="recipient"]:checked');
+    const recipients = Array.from(checkboxes).map(cb => cb.value);
+
+    if (!subject) return showError('El asunto es obligatorio.');
+    if (!body)    return showError('El mensaje es obligatorio.');
+    if (recipients.length === 0) return showError('Seleccione al menos un destinatario.');
+
+    // Guardar datos para poder reintentar
+    lastEmailData = { subject, body, recipients };
+
+    hideError();
+
+    try {
+      const response = await fetch(SEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ subject, body, recipients }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        showError(data.error, true);  // true = mostrar botón reintentar
+      } else {
+        showSuccess('Correo enviado exitosamente.');
+        document.getElementById('subject').value = '';
+        document.getElementById('body').value    = '';
+        lastEmailData = null;  // Limpiar datos
+      }
+
+    } catch (err) {
+      showError('Error de conexión. Intente nuevamente.', true);
+    }
+  }
+
+  async function retryLastEmail() {
+    if (!lastEmailData) {
+      showError('No hay datos para reintentar.');
+      return;
+    }
+
+    hideError();
+    showError('Reintentando envío...', false);  // Mensaje de progreso sin botón
+
+    try {
+      const response = await fetch(SEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  getCookie('csrftoken'),
+        },
+        body: JSON.stringify(lastEmailData),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        showError(`Reintento falló: ${data.error}`, true);
+      } else {
+        showSuccess('Correo reenviado exitosamente.');
+        document.getElementById('subject').value = '';
+        document.getElementById('body').value    = '';
+        lastEmailData = null;
+      }
+
+    } catch (err) {
+      showError('Error de conexión en reintento. Intente nuevamente.', true);
+    }
+  }
+
+  function showError(msg, showRetry = false) {
+    const el = document.getElementById('error-banner');
+    document.getElementById('error-text').textContent = msg;
+    document.getElementById('retry-btn').classList.toggle('hidden', !showRetry);
+    el.classList.remove('hidden');
+    document.getElementById('success-banner').classList.add('hidden');
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('success-banner');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('error-banner').classList.add('hidden');
+  }
+
+  function hideError() {
+    document.getElementById('error-banner').classList.add('hidden');
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      for (const cookie of document.cookie.split(';')) {
+        const c = cookie.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.slice(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+{% endblock dashboard_content %}

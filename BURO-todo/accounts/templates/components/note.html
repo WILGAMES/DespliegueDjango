@@ -1,12 +1,49 @@
 {% load static %}
 
-{# Componente Note/Alert reutilizable #}
-{# Params:                                                        #}
-{#   title   (str)  — título en negrita, ej. "Nota importante:"   #}
-{#   message (str)  — texto descriptivo                            #}
-{#   icon    (str)  — ruta relativa al SVG (opcional)              #}
+{# Componente Note/Alert reutilizable                              #}
+{# Params:                                                         #}
+{#   title    (str)  — título en negrita, ej. "Nota importante:"  #}
+{#   message  (str)  — texto descriptivo                           #}
+{#   icon     (str)  — ruta relativa al SVG (opcional)             #}
+{#   variant  (str)  — 'dark' (default) o 'light'                  #}
 
-<div class="flex  overflow-hidden mb-6"
+{% if variant == 'light' %}
+{# ============================================================ #}
+{# VARIANTE LIGHT — para fondos claros (dashboards, listados)  #}
+{# ============================================================ #}
+<div class="flex overflow-hidden mb-6 rounded-xl"
+     style="border: 1px solid #C7D2FE;">
+
+  {# ── Barra lateral con ícono ── #}
+  <div class="w-16 flex-shrink-0 flex items-center justify-center"
+       style="background: #5454E9;">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center"
+         style="background: #E4EB60;">
+      {% if icon %}
+        <img src="{% static 'accounts/icons/warning.svg' %}" alt="" class="w-5 h-5">
+      {% else %}
+        <span class="font-bold text-lg" style="color: #5454E9;">i</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Contenido ── #}
+  <div class="flex-1 px-5 py-4"
+       style="background: #EEF2FF;">
+    <p class="text-sm font-bold mb-1" style="color: #4338CA;">
+      {{ title }}
+    </p>
+    <p class="text-sm leading-relaxed" style="color: #4338CA;">
+      {{ message }}
+    </p>
+  </div>
+</div>
+
+{% else %}
+{# ============================================================ #}
+{# VARIANTE DARK — comportamiento ORIGINAL (no se modifica)    #}
+{# ============================================================ #}
+<div class="flex overflow-hidden mb-6"
      style="border: 1px solid rgba(84, 84, 233, 0.3);">
 
   {# ── Barra lateral con ícono ── #}
@@ -33,3 +70,4 @@
     </p>
   </div>
 </div>
+{% endif %}

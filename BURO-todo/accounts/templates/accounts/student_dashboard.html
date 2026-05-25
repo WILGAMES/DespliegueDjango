@@ -1,85 +1,104 @@
 {% extends 'accounts/dashboard_base.html' %}
 
 {% block dashboard_content %}
-<div class="space-y-8">
-    <section class="rounded-3xl border border-[#1D2A4F] bg-[#0B122B]/95 p-8 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
-        <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-                <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Carga académica</p>
-                <h1 class="mt-3 text-4xl font-semibold text-[#F8FAFC]">Hola, {{ request.user.name }}</h1>
-                <p class="mt-2 text-[#CBD5E1]">Tu carga actual se actualiza con cada caso asignado por secretaria.</p>
-            </div>
-            <div class="rounded-3xl bg-[#112749]/90 px-7 py-6 text-center">
-                <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Casos activos</p>
-                <p class="mt-3 text-5xl font-bold text-[#FBBF24]">{{ total_assigned_cases }}</p>
-            </div>
-        </div>
-    </section>
+<div class="space-y-6">
 
-    <div class="grid gap-4 md:grid-cols-3">
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Sala Jurídica</p>
-            <p class="mt-4 text-xl font-semibold text-[#F8FAFC]">
-                {% if request.user.room %}
-                    {{ request.user.room.name }}
-                {% else %}
-                    Sin asignar
-                {% endif %}
-            </p>
-        </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Semestre</p>
-            <p class="mt-4 text-xl font-semibold text-[#F8FAFC]">{{ request.user.student_profile.semester }}º</p>
-        </article>
-        <article class="rounded-3xl border border-[#1D2A4F] bg-[#0F172A]/90 p-6 shadow-sm">
-            <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Próximo caso</p>
-            <p class="mt-4 text-xl font-semibold text-[#F8FAFC]">{{ assigned_cases.0.number|default:'No disponible' }}</p>
-        </article>
+  {# Cabecera de bienvenida #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Carga académica</p>
+        <h1 class="mt-2 text-3xl font-semibold text-gray-900">Hola, {{ request.user.name }}</h1>
+        <p class="mt-1 text-sm text-gray-500">Tu carga actual se actualiza con cada caso asignado por secretaria.</p>
+      </div>
+      <div class="rounded-2xl border border-gray-100 bg-gray-50 px-8 py-6 text-center">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Casos activos</p>
+        <p class="mt-2 text-5xl font-bold" style="color:#5454E9;">{{ total_assigned_cases }}</p>
+      </div>
+    </div>
+  </section>
+
+  {# Tarjetas de info #}
+  <div class="grid gap-4 md:grid-cols-3">
+    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Sala Jurídica</p>
+      <p class="mt-3 text-lg font-semibold text-gray-900">
+        {% if request.user.room %}{{ request.user.room.name }}{% else %}Sin asignar{% endif %}
+      </p>
+    </article>
+    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Semestre</p>
+      <p class="mt-3 text-lg font-semibold text-gray-900">{{ request.user.student_profile.semester }}º</p>
+    </article>
+    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Próximo caso</p>
+      <p class="mt-3 text-lg font-semibold text-gray-900">{{ assigned_cases.0.number|default:'No disponible' }}</p>
+    </article>
+  </div>
+
+  {# Acciones rápidas #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Acciones rápidas</p>
+    <a href="{% url 'accounts:student-history' %}"
+       class="flex items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 px-5 py-4 transition
+              hover:border-[#5454E9]/40 hover:bg-[#5454E9]/5">
+      <div>
+        <p class="text-base font-semibold text-gray-900">Revisar historial</p>
+        <p class="mt-0.5 text-sm text-gray-500">Consulta tus notas, docentes y estado de cada periodo.</p>
+      </div>
+      <svg class="h-5 w-5 shrink-0" fill="none" stroke="#5454E9" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </section>
+
+  {# Resumen de casos #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Casos asignados</p>
+        <h2 class="mt-1 text-xl font-semibold text-gray-900">Resumen de casos</h2>
+      </div>
+      <p class="text-sm text-gray-500">Revisa los detalles de cada caso y su estado actual.</p>
     </div>
 
-    <section class="rounded-3xl border border-[#1D2A4F] bg-[#0B122B]/95 p-6 shadow-sm">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="mt-6 space-y-4">
+      {% if assigned_cases %}
+        {% for case in assigned_cases %}
+        <article class="rounded-xl border border-gray-100 bg-gray-50 p-5 transition hover:border-indigo-300">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Casos asignados</p>
-                <h2 class="mt-2 text-2xl font-semibold text-[#F8FAFC]">Resumen de casos</h2>
+              <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Caso</p>
+              <h3 class="mt-1 text-lg font-semibold text-gray-900">{{ case.number }}</h3>
             </div>
-            <div class="text-sm text-[#CBD5E1]">Revisa los detalles de cada caso y su estado actual.</div>
+            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600">
+              {{ case.status }}
+            </span>
+          </div>
+          <div class="mt-4 grid gap-4 md:grid-cols-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Sala jurídica</p>
+              <p class="mt-1 text-sm text-gray-700">{{ case.room }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Profesor asesor</p>
+              <p class="mt-1 text-sm text-gray-700">{{ case.professor }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Asignado</p>
+              <p class="mt-1 text-sm text-gray-700">{{ case.assignment_date|date:'d/m/Y' }}</p>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      {% else %}
+        <div class="rounded-xl border border-gray-100 bg-gray-50 p-12 text-center">
+          <p class="text-base font-semibold text-gray-700">No tienes casos asignados actualmente</p>
+          <p class="mt-1 text-sm text-gray-400">Tu carga académica aparecerá aquí cuando te asignen un caso.</p>
         </div>
+      {% endif %}
+    </div>
+  </section>
 
-        <div class="mt-6 space-y-4">
-            {% if assigned_cases %}
-                {% for case in assigned_cases %}
-                <article class="rounded-3xl border border-[#1D2A4F] bg-[#0E172A]/90 p-5 shadow-sm hover:border-[#FBBF24] transition">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p class="text-sm uppercase tracking-[0.3em] text-[#94A3B8]">Caso</p>
-                            <h3 class="mt-2 text-xl font-semibold text-[#F8FAFC]">{{ case.number }}</h3>
-                        </div>
-                        <span class="inline-flex items-center rounded-full bg-[#1E293B]/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#E2E8F0]">{{ case.status }}</span>
-                    </div>
-                    <div class="mt-5 grid gap-4 md:grid-cols-4">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.3em] text-[#94A3B8]">Sala jurídica</p>
-                            <p class="mt-2 text-sm text-[#CBD5E1]">{{ case.room }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.3em] text-[#94A3B8]">Profesor asesor</p>
-                            <p class="mt-2 text-sm text-[#CBD5E1]">{{ case.professor }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.3em] text-[#94A3B8]">Asignado</p>
-                            <p class="mt-2 text-sm text-[#CBD5E1]">{{ case.assignment_date|date:'d/m/Y' }}</p>
-                        </div>
-                    </div>
-                </article>
-                {% endfor %}
-            {% else %}
-                <div class="rounded-3xl border border-[#1D2A4F] bg-[#0E172A]/90 p-12 text-center">
-                    <p class="text-lg font-semibold text-[#F8FAFC]">No tienes casos asignados actualmente</p>
-                    <p class="mt-2 text-sm text-[#94A3B8]">Tu carga académica aparecerá aquí cuando te asignen un caso.</p>
-                </div>
-            {% endif %}
-        </div>
-    </section>
 </div>
 {% endblock dashboard_content %}

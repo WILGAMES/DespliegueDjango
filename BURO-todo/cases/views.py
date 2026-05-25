@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_GET
 from django.db import transaction
@@ -20,7 +20,11 @@ from cases.models import Appointment, AppointmentLog
 from accounts.utils import get_user_role,  normalize_role_name, validate_coordinator, validate_professor_legal_room_access
 from cases.models import AcademicAction, AcademicRecordTraceability, Case, CaseLog, AssignmentCriteriaConfig, AssignmentCriteriaLog
 from .forms import AssignmentCriteriaForm
+# cases/views.py — agregar al final
 
+from django.views.decorators.http import require_http_methods
+from cases.models import CommunicationLog
+from notifications.services import send_notification
 
 @login_required
 @require_GET
@@ -120,9 +124,9 @@ class RegisterAcademicActionView(LoginRequiredMixin, View):
         if case.professor != professor:
             return JsonResponse({'error': 'Solo el profesor asesor puede registrar acciones en este caso'}, status=403)
 
-        # Criterio 1: solo se pueden registrar acciones en casos activos
-        if case.status != 'active':
-            return JsonResponse({'error': 'No se pueden registrar acciones en casos cerrados o suspendidos'}, status=400)
+        # Criterio 1: solo se pueden registrar acciones en casos no cerrados
+        if case.status == 'Cerrado':
+            return JsonResponse({'error': 'No se pueden registrar acciones en casos cerrados'}, status=400)
 
         # Validar rango de nota
         try:
@@ -164,7 +168,14 @@ class RegisterAcademicActionView(LoginRequiredMixin, View):
 @login_required
 def case_detail_view(request, case_id):
     case = get_object_or_404(Case, id=case_id)
-    return redirect('cases:academic-action-form', case_id=case.id)
+    appointments = Appointment.objects.filter(
+        case=case
+    ).order_by('-scheduled_datetime')
+
+    return render(request, 'cases/case_detail.html', {
+        'case':         case,
+        'appointments': appointments,
+    })
 
 
 @login_required
@@ -274,9 +285,9 @@ class AcademicActionFormView(LoginRequiredMixin, View):
             messages.error(request, 'Acceso denegado. Solo el profesor asesor puede registrar acciones en este caso.')
             return redirect('accounts:dashboard')
 
-        # Validar que el caso esté activo
-        if case.status != 'active':
-            messages.error(request, 'No se pueden registrar acciones en casos no activos.')
+        # Validar que el caso no esté cerrado
+        if case.status == 'Cerrado':
+            messages.error(request, 'No se pueden registrar acciones en casos cerrados.')
             return redirect('accounts:dashboard')
 
         # Obtener acciones previas para mostrar historial
@@ -291,6 +302,22 @@ class AcademicActionFormView(LoginRequiredMixin, View):
             'partialGradeUrl': reverse('cases:get-partial-grade', args=[case.id]),
             'registerActionUrl': reverse('cases:register-academic-action'),
         }
+        # PTCJMGA-XX: Sancion academica - datos para el boton y modal
+        from accounts.models import Student
+        available_students = Student.objects.select_related('user').exclude(
+            id=case.student.id if case.student else 0
+        ).order_by('user__name')
+
+        # Verificar si el usuario puede aplicar sanciones
+        user_role = getattr(request.user, 'role', None)
+        is_professor = (
+            request.user.is_superuser or
+            request.user.is_staff or
+            (user_role and user_role.name.lower() in ['professor', 'profesor', 'admin', 'coordinator', 'coordinador'])
+        )
+
+        # Leer y limpiar el modal de feedback (si viene de aplicar sancion)
+        sancion_modal = request.session.pop('sancion_modal', None)
 
         return render(request, 'cases/register_academic_action.html', {
             'case': case,
@@ -298,6 +325,10 @@ class AcademicActionFormView(LoginRequiredMixin, View):
             'page_title': 'Acción académica',
             'role_name': get_user_role(request.user),
             'academic_action_config': academic_action_config,
+            'available_students': available_students,   
+            'is_professor': is_professor,                
+            'sancion_modal': sancion_modal,             
+            'user_name': request.user.name,       
         })
 class GetPartialGradeView(LoginRequiredMixin, View):
     def get(self, request, case_id):
@@ -332,15 +363,15 @@ def case_list_view(request):
     from cases.services import filter_cases_by_status
     queryset = filter_cases_by_status(status)
     # Select related to avoid N+1 queries
-    cases = queryset.select_related('beneficiary').values('number', 'beneficiary__name', 'status')
+    cases = queryset.select_related('beneficiary').values('id', 'number', 'beneficiary__name', 'status')
     cases = list(cases)
-    
-    # Format the response
+
     response_data = [
         {
-            "number": case['number'],
+            "id":          case['id'],
+            "number":      case['number'],
             "beneficiary": case['beneficiary__name'],
-            "status": case['status']
+            "status":      case['status']
         }
         for case in cases
     ]
@@ -602,34 +633,28 @@ class StudentDeadlineSummaryView(LoginRequiredMixin, View):
 
 
 class ProfessorCasesView(LoginRequiredMixin, View):
-    """
-    HU: Como profesor asesor, quiero recibir alertas y ver en mi panel los casos
-    de mi sala que se acercan a su fecha límite legal
-    
-    Criterio: Endpoint GET de casos de la sala con semáforo
-    """
 
     def handle_no_permission(self):
         return JsonResponse({'error': 'Autenticación requerida'}, status=401)
 
     def get(self, request):
-        # Verificar rol del usuario
-        if not hasattr(request.user, 'role') or request.user.role is None or request.user.role.name != 'PROFESSOR':
+        # Verificar rol — comparación case-insensitive
+        if not hasattr(request.user, 'role') or request.user.role is None:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+        if request.user.role.name.lower() not in ['professor', 'profesor']:
             return JsonResponse({'error': 'Unauthorized'}, status=403)
 
-        # Obtener el perfil de profesor
         try:
             professor = request.user.professor_profile
         except:
             return JsonResponse({'error': 'Professor profile not found'}, status=404)
 
-        # Obtener la sala del profesor
         if not hasattr(request.user, 'room') or request.user.room is None:
             return JsonResponse({'error': 'Professor has no assigned room'}, status=400)
 
         room = request.user.room
 
-        # Obtener casos activos de la sala del profesor
         cases = Case.objects.filter(
             professor=professor,
             room=room,
@@ -642,7 +667,6 @@ class ProfessorCasesView(LoginRequiredMixin, View):
         for case in cases:
             days_remaining = (case.legal_deadline - today).days
 
-            # Determinar semáforo
             if days_remaining <= 1:
                 semaphore = 'red'
             elif days_remaining == 2:
@@ -651,14 +675,15 @@ class ProfessorCasesView(LoginRequiredMixin, View):
                 semaphore = 'green'
 
             response_data.append({
-                'id': case.id,
-                'number': case.number,
-                'student_name': case.student.user.name if case.student else '',
+                'id':             case.id,
+                'number':         case.number or f'Caso {case.id}',
+                'student_name':   case.student.user.name if case.student else 'Sin asignar',
+                'beneficiary':    case.beneficiary.name if case.beneficiary else 'Sin asignar',
+                'status':         case.status,
                 'days_remaining': days_remaining,
-                'semaphore': semaphore,
+                'semaphore':      semaphore,
             })
 
-        # Ordenar: rojos primero, luego por días restantes
         response_data.sort(key=lambda x: (x['semaphore'] != 'red', x['days_remaining']))
 
         return JsonResponse(response_data, safe=False)
@@ -677,7 +702,7 @@ class ProfessorDeadlineSummaryView(LoginRequiredMixin, View):
 
     def get(self, request):
         # Verificar rol del usuario
-        if not hasattr(request.user, 'role') or request.user.role is None or request.user.role.name != 'PROFESSOR':
+        if not hasattr(request.user, 'role') or request.user.role is None or request.user.role.name.lower() not in ['professor', 'profesor']:
             return JsonResponse({'error': 'Unauthorized'}, status=403)
 
         # Obtener el perfil de profesor
@@ -752,11 +777,11 @@ class ProfessorStudentsForGradingView(LoginRequiredMixin, View):
 
         professor = request.user.professor_profile
         
-        # Obtener todos los casos activos del profesor (sin restricción a solo su sala)
-        # El profesor puede tener casos en diferentes salas según su asignación
+        # Obtener todos los casos no cerrados del profesor
         cases = Case.objects.filter(
             professor=professor,
-            status='active'
+        ).exclude(
+            status='Cerrado'
         ).select_related(
             'student__user',
             'room'
@@ -850,3 +875,589 @@ def appointment_history(request, appointment_id):
         'logs':        logs,
         'case':        appointment.case,
     })
+
+
+def _is_professor(user):
+    """Verifica si el usuario tiene rol de profesor."""
+    role = getattr(user, 'role', None)
+    return role and role.name.lower() in ['profesor', 'professor']
+
+
+@login_required
+def email_recipients(request, case_id):
+    """
+    Retorna la lista de destinatarios disponibles para un caso.
+    Solo accesible para el profesor del caso.
+    """
+    from cases.models import Case
+
+    case = get_object_or_404(Case, pk=case_id)
+
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    recipients = []
+
+    # Agregar estudiante si tiene correo
+    if case.student and case.student.user.email:
+        recipients.append({
+            'name':  case.student.user.name,
+            'email': case.student.user.email,
+            'role':  'Estudiante',
+        })
+
+    # Agregar beneficiario si tiene correo
+    if case.beneficiary and case.beneficiary.email and case.beneficiary.email.strip():
+        recipients.append({
+            'name':  case.beneficiary.name,
+            'email': case.beneficiary.email,
+            'role':  'Beneficiario',
+        })
+
+    return JsonResponse({'recipients': recipients})
+
+
+@login_required
+@require_http_methods(['POST'])
+def send_case_email(request, case_id):
+    """
+    Permite al profesor enviar un correo institucional
+    a los destinatarios del caso. Registra en CommunicationLog.
+    """
+    from cases.models import Case
+
+    case = get_object_or_404(Case, pk=case_id)
+
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido.'}, status=400)
+
+    subject    = data.get('subject', '').strip()
+    body       = data.get('body', '').strip()
+    recipients = data.get('recipients', [])
+
+    # Validaciones
+    if not subject:
+        return JsonResponse({'error': 'El asunto es obligatorio.'}, status=400)
+    if not body:
+        return JsonResponse({'error': 'El cuerpo del mensaje es obligatorio.'}, status=400)
+    if not recipients:
+        return JsonResponse({'error': 'Debe seleccionar al menos un destinatario.'}, status=400)
+
+    # Construir cuerpo final con referencia del caso
+    full_body = (
+        f"{body}\n\n"
+        f"---\n"
+        f"Referencia: Caso {case.id} — {case.room.name}\n"
+        f"Este mensaje fue enviado desde el sistema BURO.\n"
+    )
+
+    # Intentar envío a cada destinatario
+    send_errors = []
+    for email in recipients:
+        try:
+            send_notification(to=email, subject=subject, body=full_body)
+        except Exception as e:
+            from notifications.models import FailedNotification
+            # Registrar fallo explícitamente en la view
+            FailedNotification.objects.create(
+                to=email,
+                subject=subject,
+                body=full_body,
+                error_message=str(e),
+            )
+            send_errors.append({'email': email, 'error': str(e)})
+
+    # Determinar status general
+    status = 'fallido' if send_errors else 'enviado'
+
+    # Registrar en bitácora sin importar el resultado
+    CommunicationLog.objects.create(
+        case=case,
+        sent_by=request.user,
+        recipients=recipients,
+        subject=subject,
+        body=full_body,
+        status=status,
+    )
+
+    if send_errors:
+        return JsonResponse({
+            'error':  'No fue posible enviar el correo a algunos destinatarios.',
+            'detail': send_errors,
+        }, status=200)
+
+    return JsonResponse({'message': 'Correo enviado exitosamente.'}, status=200)
+
+
+@login_required
+def communication_history(request, case_id):
+    """
+    Muestra el historial de correos institucionales del caso.
+    Solo accesible para el profesor.
+    """
+    from cases.models import Case
+
+    case = get_object_or_404(Case, pk=case_id)
+
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    logs = CommunicationLog.objects.filter(
+        case=case
+    ).order_by('-sent_at')
+
+    return render(request, 'cases/communication_history.html', {
+        'case': case,
+        'logs': logs,
+    })
+
+@login_required
+def compose_case_email(request, case_id):
+    """Renderiza el formulario de redacción de correo institucional."""
+    from cases.models import Case
+
+    case = get_object_or_404(Case, pk=case_id)
+
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    return render(request, 'cases/compose_case_email.html', {'case': case})
+
+
+@login_required
+def professor_appointment_alerts(request):
+    """
+    Panel de alertas para profesores:
+    - Reprogramaciones sin motivo (últimos 30 días)
+    - Casos con vencimiento crítico (≤ 7 días)
+    """
+    from datetime import timedelta
+
+    if not _is_professor(request.user):
+        return redirect('accounts:dashboard')
+
+    try:
+        professor = request.user.professor_profile
+    except Exception:
+        return redirect('accounts:dashboard')
+
+    # 1. Reprogramaciones sin motivo
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    reschedule_alerts = AppointmentLog.objects.filter(
+        appointment__case__professor=professor,
+        no_reason_flag=True,
+        changed_at__gte=thirty_days_ago,
+    ).select_related(
+        'appointment__case__room',
+        'appointment__case__student__user',
+        'appointment__case__beneficiary',
+        'changed_by__role',
+    ).order_by('-changed_at')
+
+    # 2. Casos con vencimiento crítico (≤ 7 días)
+    today = timezone.now().date()
+    critical_cases = []
+    cases = Case.objects.filter(
+        professor=professor,
+        status__in=['active', 'Asignado', 'En proceso'],
+        legal_deadline__lte=today + timedelta(days=7),
+    ).select_related('student__user', 'beneficiary', 'room')
+
+    for case in cases:
+        days_remaining = (case.legal_deadline - today).days
+        critical_cases.append({
+            'case':           case,
+            'days_remaining': days_remaining,
+            'semaphore':      'red' if days_remaining <= 1 else 'yellow',
+        })
+
+    critical_cases.sort(key=lambda x: x['days_remaining'])
+
+    return render(request, 'cases/professor_appointment_alerts.html', {
+        'alerts':          reschedule_alerts,
+        'critical_cases':  critical_cases,
+        'page_title':      'Alertas',
+    })
+
+
+@login_required
+def professor_appointment_alerts_count(request):
+    """
+    Endpoint que retorna el número de alertas pendientes del profesor.
+    Útil para mostrar badge en navbar.
+    """
+    from datetime import timedelta
+    
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    try:
+        professor = request.user.professor_profile
+    except:
+        return JsonResponse({'count': 0})
+
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    count = (
+        AppointmentLog.objects
+        .filter(
+            appointment__case__professor=professor,
+            no_reason_flag=True,
+            changed_at__gte=thirty_days_ago,
+        )
+        .count()
+    )
+
+    return JsonResponse({'count': count})
+
+
+@login_required
+@require_http_methods(['POST'])
+def retry_failed_notification(request, case_id, log_id):
+    """
+    Reintenta enviar una notificación que falló previamente.
+    Busca en FailedNotification y reintenta el envío.
+    """
+    from cases.models import Case
+    from notifications.models import FailedNotification
+
+    case = get_object_or_404(Case, pk=case_id)
+
+    if not _is_professor(request.user):
+        return JsonResponse({'error': 'No autorizado.'}, status=403)
+
+    try:
+        failed_notif = FailedNotification.objects.get(pk=log_id)
+    except FailedNotification.DoesNotExist:
+        return JsonResponse({'error': 'Notificación no encontrada.'}, status=404)
+
+    # Intentar reenvío
+    try:
+        send_notification(
+            to=failed_notif.to,
+            subject=failed_notif.subject,
+            body=failed_notif.body,
+        )
+        
+        # Marcar como resuelta
+        failed_notif.resolved = True
+        failed_notif.resolved_at = timezone.now()
+        failed_notif.save()
+
+        return JsonResponse({
+            'status': 'enviado',
+            'message': 'Correo reenviado exitosamente.'
+        })
+
+    except Exception as e:
+        # Actualizar error message pero mantener sin resolver
+        failed_notif.error_message = str(e)
+        failed_notif.save()
+
+        return JsonResponse({
+            'status': 'fallo',
+            'error': f'No fue posible reenviar: {str(e)}',
+        }, status=200)
+    
+@login_required
+def professor_cases_page(request):
+    """Renderiza la página de casos del profesor."""
+    if not _is_professor(request.user):
+        return redirect('accounts:dashboard')
+
+    return render(request, 'cases/professor_cases.html', {
+        'page_title': 'Mis casos',
+    })# ============================================================
+# PTCJMGA-XX: Sancion academica (reasignacion como sancion)
+# ============================================================
+
+from cases.services import SanctionService
+
+
+class ApplySanctionView(LoginRequiredMixin, View):
+    """
+    PTCJMGA-XX: Vista para aplicar sancion academica sobre un caso.
+
+    Solo accesible para profesores, coordinadores o admin.
+    Recibe POST con: case_id (URL), student_id, reason.
+    Reasigna el caso al estudiante sancionado y crea registro inmutable.
+    """
+
+    def handle_no_permission(self):
+        return JsonResponse({'error': 'Autenticacion requerida'}, status=401)
+
+    def post(self, request, case_id):
+        """
+        Aplica la sancion academica.
+
+        Espera form-encoded o JSON con:
+            student_id: ID del estudiante a sancionar
+            reason: motivo de la sancion (obligatorio)
+        """
+        # Parsear datos del request (acepta form o JSON)
+        if request.content_type == 'application/json':
+            try:
+                body = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'JSON invalido'}, status=400)
+            student_id = body.get('student_id')
+            reason = body.get('reason', '')
+        else:
+            student_id = request.POST.get('student_id')
+            reason = request.POST.get('reason', '')
+
+        # Validar campos obligatorios
+        if not student_id:
+            messages.error(request, 'Debe seleccionar el estudiante a sancionar.')
+            return redirect('cases:case-detail', case_id=case_id)
+
+        if not reason or not reason.strip():
+            request.session['sancion_modal'] = {
+            'tipo': 'warning',
+            'mensaje': 'El motivo de la sanción es obligatorio.',
+            }
+            return redirect('cases:case-detail', case_id=case_id)
+
+        # Buscar el caso
+        try:
+            case = Case.objects.select_related('student__user').get(pk=case_id)
+        except Case.DoesNotExist:
+            messages.error(request, 'Caso no encontrado.')
+            return redirect('accounts:dashboard')
+
+        # Buscar el estudiante a sancionar
+        from accounts.models import Student
+        try:
+            sanctioned_student = Student.objects.select_related('user').get(pk=student_id)
+        except Student.DoesNotExist:
+            messages.error(request, 'Estudiante no encontrado.')
+            return redirect('cases:case-detail', case_id=case_id)
+
+        # Aplicar la sancion
+        try:
+            log = SanctionService.apply_sanction(
+                case=case,
+                sanctioned_student=sanctioned_student,
+                applied_by=request.user,
+                reason=reason,
+            )
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+            return redirect('accounts:dashboard')
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('cases:case-detail', case_id=case_id)
+
+        request.session['sancion_modal'] = {
+        'tipo': 'success',
+        'mensaje': f'Sanción aplicada exitosamente. El caso fue reasignado a {sanctioned_student.user.name}.',
+        }
+        return redirect('cases:case-detail', case_id=case_id)
+
+class StudentSanctionsHistoryView(LoginRequiredMixin, View):
+    """
+    PTCJMGA-XX: Vista de solo lectura del historial de sanciones de un estudiante.
+    Cubre el Escenario 3 Gherkin de la HU.
+
+    Solo profesores, coordinadores o admin pueden consultar.
+    """
+
+    def handle_no_permission(self):
+        return JsonResponse({'error': 'Autenticacion requerida'}, status=401)
+
+    def get(self, request, student_id):
+        # Validar permisos (mismo criterio que aplicar sancion)
+        if not request.user.is_superuser and not request.user.is_staff:
+            user_role = getattr(request.user, 'role', None)
+            if not user_role or user_role.name.lower() not in [
+                'professor', 'profesor', 'admin', 'coordinator', 'coordinador'
+            ]:
+                messages.error(
+                    request,
+                    'No tiene permisos para consultar el historial de sanciones.'
+                )
+                return redirect('accounts:dashboard')
+
+        # Buscar el estudiante
+        from accounts.models import Student
+        try:
+            student = Student.objects.select_related('user').get(pk=student_id)
+        except Student.DoesNotExist:
+            messages.error(request, 'Estudiante no encontrado.')
+            return redirect('accounts:dashboard')
+
+        # Obtener sanciones del estudiante usando el servicio
+        sanctions = SanctionService.get_student_sanctions(student)
+
+        return render(request, 'cases/student_sanctions_history.html', {
+            'student': student,
+            'sanctions': sanctions,
+            'sanctions_count': sanctions.count(),
+            'page_title': f'Historial de sanciones - {student.user.name}',
+        })
+    
+@login_required
+def professor_notifications_count(request):
+    """
+    Retorna el conteo combinado de notificaciones para el profesor:
+    - Casos con vencimiento crítico (≤ 7 días)
+    - Reprogramaciones sin motivo (últimos 30 días)
+    """
+    if not _is_professor(request.user):
+        return JsonResponse({'count': 0})
+
+    try:
+        professor = request.user.professor_profile
+    except Exception:
+        return JsonResponse({'count': 0})
+
+    from datetime import timedelta
+
+    # 1. Casos con vencimiento crítico (semáforo rojo o amarillo)
+    today = timezone.now().date()
+    deadline_count = Case.objects.filter(
+        professor=professor,
+        status__in=['active', 'Asignado', 'En proceso'],
+        legal_deadline__lte=today + timedelta(days=7),
+    ).count()
+
+    # 2. Reprogramaciones sin motivo (últimos 30 días)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    reschedule_count = AppointmentLog.objects.filter(
+        appointment__case__professor=professor,
+        no_reason_flag=True,
+        changed_at__gte=thirty_days_ago,
+    ).count()
+
+    return JsonResponse({'count': deadline_count + reschedule_count})
+@login_required
+def professor_inbox(request):
+    """
+    Bandeja de comunicaciones del profesor.
+    Muestra todos los correos enviados en todos sus casos.
+    """
+    if not _is_professor(request.user):
+        return redirect('accounts:dashboard')
+
+    try:
+        professor = request.user.professor_profile
+    except Exception:
+        return redirect('accounts:dashboard')
+
+    # Todos los correos enviados por el profesor
+    logs = CommunicationLog.objects.filter(
+        sent_by=request.user,
+    ).select_related('case__room').order_by('-sent_at')
+
+    # Casos activos del profesor para el selector de redacción
+    cases = Case.objects.filter(
+        professor=professor,
+        status__in=['active', 'Asignado', 'En proceso'],
+    ).select_related('room').order_by('room__name')
+
+    return render(request, 'cases/professor_inbox.html', {
+        'logs':  logs,
+        'cases': cases,
+    })
+
+@login_required
+def secretary_reminders_dashboard(request):
+    """
+    Panel de la secretaria para monitorear el estado
+    de los recordatorios automáticos de citas.
+    """
+    from datetime import timedelta
+    from cases.models import CaseLog
+
+    user_role = getattr(request.user, 'role', None)
+    role_name = user_role.name.lower() if user_role else ''
+    if role_name not in ['secretaria', 'secretary']:
+        return redirect('accounts:dashboard')
+
+    now    = timezone.now()
+    window = now + timedelta(hours=24)
+
+    # Citas próximas en las siguientes 24 horas
+    upcoming = Appointment.objects.filter(
+        scheduled_datetime__gte=now,
+        scheduled_datetime__lte=window,
+    ).exclude(
+        status__in=['cancelada', 'completada']
+    ).select_related(
+        'case__beneficiary',
+        'case__room',
+        'case__student__user',
+    ).order_by('scheduled_datetime')
+
+    # Citas sin correo de beneficiario
+    no_email = [a for a in upcoming if not a.case.beneficiary or not a.case.beneficiary.email]
+
+    # Citas con recordatorio ya enviado
+    reminded = [a for a in upcoming if a.reminder_sent]
+
+    # Citas pendientes de recordatorio
+    pending = [a for a in upcoming if not a.reminder_sent and a not in no_email]
+
+    # Últimos eventos de bitácora de recordatorios
+    recent_logs = CaseLog.objects.filter(
+        event_type='error_notificacion',
+    ).select_related('case__room').order_by('-created_at')[:20]
+
+    return render(request, 'cases/secretary_reminders_dashboard.html', {
+        'upcoming':     upcoming,
+        'no_email':     no_email,
+        'reminded':     reminded,
+        'pending':      pending,
+        'recent_logs':  recent_logs,
+        'now':          now,
+    })
+class StudentsListForSanctionsView(LoginRequiredMixin, View):
+    """
+    PTCJMGA-XX: Vista del listado de estudiantes para que el profesor
+    seleccione cual quiere consultar/sancionar.
+    Accesible desde el sidebar del profesor.
+    """
+
+    def handle_no_permission(self):
+        return JsonResponse({'error': 'Autenticacion requerida'}, status=401)
+
+    def get(self, request):
+        # Validar permisos (mismo criterio que aplicar sancion)
+        if not request.user.is_superuser and not request.user.is_staff:
+            user_role = getattr(request.user, 'role', None)
+            if not user_role or user_role.name.lower() not in [
+                'professor', 'profesor', 'admin', 'coordinator', 'coordinador'
+            ]:
+                messages.error(
+                    request,
+                    'No tiene permisos para consultar sanciones academicas.'
+                )
+                return redirect('accounts:dashboard')
+
+        # Obtener estudiantes y calcular conteo de sanciones manualmente
+        # (evita problemas con related_names duplicados en el modelo Case)
+        from accounts.models import Student
+
+        all_students = Student.objects.select_related('user').order_by('user__name')
+
+        students = []
+        for student in all_students:
+            sanctions_count = SanctionService.get_student_sanctions(student).count()
+            students.append({
+                'id': student.id,
+                'name': student.user.name,
+                'student_code': student.student_code,
+                'semester': student.semester,
+                'sanctions_count': sanctions_count,
+            })
+
+        return render(request, 'cases/sanctions_students_list.html', {
+            'students': students,
+            'page_title': 'Sanciones academicas',
+            'user_name': request.user.name,
+            'role_name': get_user_role(request.user),
+        })

@@ -1,0 +1,112 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Comunicaciones</p>
+        <h2 class="mt-2 text-2xl font-semibold text-white">Bandeja de correos</h2>
+        <p class="mt-1 text-sm text-slate-400">Todos los correos institucionales enviados desde el sistema.</p>
+      </div>
+
+      <!-- Botón redactar nuevo -->
+      <div class="relative" id="compose-wrapper">
+        <button onclick="document.getElementById('case-selector').classList.toggle('hidden')"
+                class="rounded-full bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-yellow-300 transition">
+          + Redactar
+        </button>
+
+        <!-- Selector de caso -->
+        <div id="case-selector"
+             class="hidden absolute right-0 mt-2 w-72 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+          <p class="px-4 py-3 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-700">
+            Selecciona un caso
+          </p>
+          {% if cases %}
+            {% for case in cases %}
+            <a href="{% url 'cases:compose_case_email' case.id %}"
+               class="flex items-center justify-between px-4 py-3 text-sm text-white hover:bg-slate-800 transition border-b border-slate-800">
+              <div>
+                <p class="font-medium">Caso #{{ case.id }}</p>
+                <p class="text-xs text-slate-400">{{ case.room.name }}</p>
+              </div>
+              <span class="text-indigo-400 text-xs">Redactar →</span>
+            </a>
+            {% endfor %}
+          {% else %}
+          <p class="px-4 py-4 text-sm text-slate-400">No tienes casos activos.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    {% if logs %}
+    <div class="space-y-4">
+      {% for log in logs %}
+      <div class="rounded-xl border
+        {% if log.status == 'fallido' %}border-red-500/40 bg-red-500/5
+        {% else %}border-slate-700 bg-slate-950/60{% endif %}
+        p-4">
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <p class="text-sm font-semibold text-white">{{ log.subject }}</p>
+            <span class="text-xs text-slate-500">· Caso #{{ log.case.id }} — {{ log.case.room.name }}</span>
+          </div>
+          <span class="rounded-full px-3 py-0.5 text-xs font-semibold
+            {% if log.status == 'enviado' %}bg-green-500/20 text-green-300
+            {% else %}bg-red-500/20 text-red-300{% endif %}">
+            {{ log.status }}
+          </span>
+        </div>
+
+        <p class="mt-1 text-xs text-slate-500">
+          {{ log.sent_at|date:"d/m/Y H:i" }}
+        </p>
+
+        <div class="mt-3">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Destinatarios</p>
+          <div class="mt-1 flex flex-wrap gap-2">
+            {% for recipient in log.recipients %}
+            <span class="rounded-full bg-slate-800 px-3 py-0.5 text-xs text-slate-300">
+              {{ recipient }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mt-3 flex justify-end">
+          <a href="{% url 'cases:communication_history' log.case.id %}"
+             class="text-xs text-indigo-400 hover:text-indigo-300">
+            Ver historial del caso →
+          </a>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    {% include 'components/empty_state.html' with title='Sin correos enviados' description='Los correos que envíes desde los casos aparecerán aquí.' %}
+    {% endif %}
+  </section>
+
+</div>
+
+<script>
+  // Cerrar selector de caso al hacer click fuera
+  document.addEventListener('click', function(e) {
+    const wrapper  = document.getElementById('compose-wrapper');
+    const selector = document.getElementById('case-selector');
+    if (wrapper && selector && !wrapper.contains(e.target)) {
+      selector.classList.add('hidden');
+    }
+  });
+</script>
+
+{% endblock dashboard_content %}

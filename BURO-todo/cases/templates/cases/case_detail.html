@@ -1,0 +1,129 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+  <!-- Encabezado del caso -->
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Caso #{{ case.id }}</p>
+        <h2 class="mt-2 text-2xl font-semibold text-white">
+          {% if case.student %}{{ case.student.user.name }}{% else %}Sin estudiante asignado{% endif %}
+        </h2>
+        <p class="mt-1 text-sm text-slate-400">
+          {{ case.room.name }} · Vence: {{ case.legal_deadline|date:"d/m/Y" }}
+        </p>
+        {% if case.beneficiary %}
+        <p class="mt-1 text-sm text-slate-500">
+          Beneficiario: {{ case.beneficiary.name }}
+        </p>
+        {% endif %}
+      </div>
+      {% include 'components/status_badge.html' with status=case.status %}
+    </div>
+  </section>
+
+  <!-- Acciones rápidas -->
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Acciones</p>
+    <h3 class="mt-2 text-lg font-semibold text-white">¿Qué desea hacer?</h3>
+
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+      <!-- Acciones académicas -->
+      <a href="{% url 'cases:academic-action-form' case.id %}"
+         class="flex flex-col gap-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-5 hover:border-indigo-500/50 hover:bg-slate-900 transition-all">
+        <span class="text-2xl"></span>
+        <p class="text-sm font-semibold text-white">Acciones académicas</p>
+        <p class="text-xs text-slate-400">Registrar entregas, seguimientos y asistencias.</p>
+      </a>
+
+      <!-- Redactar correo -->
+      {% if request.user.professor_profile %}
+      <a href="{% url 'cases:compose_case_email' case.id %}"
+         class="flex flex-col gap-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-5 hover:border-indigo-500/50 hover:bg-slate-900 transition-all">
+        <span class="text-2xl"></span>
+        <p class="text-sm font-semibold text-white">Redactar correo</p>
+        <p class="text-xs text-slate-400">Enviar correo institucional a estudiante o beneficiario.</p>
+      </a>
+
+      <!-- Historial de comunicaciones -->
+      <a href="{% url 'cases:communication_history' case.id %}"
+         class="flex flex-col gap-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-5 hover:border-indigo-500/50 hover:bg-slate-900 transition-all">
+        <span class="text-2xl"></span>
+        <p class="text-sm font-semibold text-white">Historial de correos</p>
+        <p class="text-xs text-slate-400">Ver todos los correos enviados en este caso.</p>
+      </a>
+      {% endif %}
+
+      <!-- Reprogramar cita (secretaria) -->
+      {% if appointments %}
+        {% with appointments.first as latest %}
+        <a href="{% url 'cases:reschedule_appointment' latest.id %}"
+           class="flex flex-col gap-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-5 hover:border-yellow-500/50 hover:bg-slate-900 transition-all">
+          <span class="text-2xl"></span>
+          <p class="text-sm font-semibold text-white">Reprogramar cita</p>
+          <p class="text-xs text-slate-400">
+            Próxima: {{ latest.scheduled_datetime|date:"d/m/Y H:i" }}
+          </p>
+        </a>
+        {% endwith %}
+      {% endif %}
+
+      <!-- Historial de citas -->
+      {% if appointments %}
+        {% with appointments.first as latest %}
+        <a href="{% url 'cases:appointment_history' latest.id %}"
+           class="flex flex-col gap-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-5 hover:border-indigo-500/50 hover:bg-slate-900 transition-all">
+          <span class="text-2xl"></span>
+          <p class="text-sm font-semibold text-white">Historial de citas</p>
+          <p class="text-xs text-slate-400">Ver reprogramaciones y bitácora de la cita.</p>
+        </a>
+        {% endwith %}
+      {% endif %}
+
+    </div>
+  </section>
+
+  <!-- Citas del caso -->
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Citas</p>
+    <h3 class="mt-2 text-lg font-semibold text-white">Citas programadas</h3>
+
+    {% if appointments %}
+    <div class="mt-4 space-y-3">
+      {% for apt in appointments %}
+      <div class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/60 p-4">
+        <div>
+          <p class="text-sm font-semibold text-white">
+            {{ apt.scheduled_datetime|date:"d/m/Y H:i" }}
+          </p>
+          <p class="mt-0.5 text-xs text-slate-400">
+            {{ apt.get_modality_display }} · {{ apt.location_or_link|default:"Sin ubicación" }}
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="rounded-full px-3 py-0.5 text-xs font-semibold
+            {% if apt.status == 'programada' %}bg-green-500/20 text-green-300
+            {% elif apt.status == 'reprogramada' %}bg-yellow-500/20 text-yellow-300
+            {% elif apt.status == 'cancelada' %}bg-red-500/20 text-red-300
+            {% else %}bg-slate-700 text-slate-300{% endif %}">
+            {{ apt.status }}
+          </span>
+          <a href="{% url 'cases:appointment_history' apt.id %}"
+             class="text-xs text-indigo-400 hover:text-indigo-300">
+            Ver historial →
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include 'components/empty_state.html' with title='Sin citas' description='No hay citas programadas para este caso.' %}
+    {% endif %}
+
+  </section>
+
+</div>
+{% endblock dashboard_content %}

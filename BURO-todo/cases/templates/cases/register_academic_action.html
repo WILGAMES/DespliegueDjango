@@ -2,43 +2,49 @@
 
 {% block dashboard_content %}
 <div class="space-y-6">
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
+
+  {# Cabecera del caso #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Caso #{{ case.id }}</p>
-        <h2 class="mt-2 text-2xl font-semibold text-white">{{ case.student.user.name }}</h2>
-        <p class="mt-2 text-sm text-slate-400">{{ case.room.name }} · Vence: {{ case.legal_deadline }}</p>
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Caso #{{ case.id }}</p>
+        <h2 class="mt-2 text-2xl font-semibold text-gray-900">{{ case.student.user.name }}</h2>
+        <p class="mt-1 text-sm text-gray-500">{{ case.room.name }} · Vence: {{ case.legal_deadline }}</p>
       </div>
       {% include 'components/status_badge.html' with status=case.status %}
     </div>
   </section>
 
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
-    <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Nota parcial acumulada</p>
-    <div class="mt-4 flex items-end gap-3">
-      <span id="nota-parcial" class="text-5xl font-bold text-yellow-300">--</span>
-      <span class="mb-2 text-sm text-slate-400">/ 5.0</span>
+  {# Nota parcial #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Nota parcial acumulada</p>
+    <div class="mt-3 flex items-end gap-3">
+      <span id="nota-parcial" class="text-5xl font-bold text-indigo-600">--</span>
+      <span class="mb-1 text-sm text-gray-400">/ 5.0</span>
     </div>
-    <p class="mt-2 text-xs text-slate-500">Se recalcula automáticamente al registrar una nueva acción.</p>
+    <p class="mt-2 text-xs text-gray-400">Se recalcula automáticamente al registrar una nueva acción.</p>
   </section>
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
-      <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Registro</p>
-      <h2 class="mt-2 text-xl font-semibold text-white">Registrar acción académica</h2>
-      <p class="mt-2 text-sm text-slate-400">Complete los campos y confirme el registro.</p>
 
-      <div class="mt-6">
-        {% include 'components/note.html' with title='Registro inmutable' message='Una vez guardada, la acción no puede modificarse. Solo se puede agregar una observación adicional con aprobación del coordinador.' %}
+    {# Formulario de registro #}
+    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Registro</p>
+      <h2 class="mt-2 text-xl font-semibold text-gray-900">Registrar acción académica</h2>
+      <p class="mt-1 text-sm text-gray-500">Complete los campos y confirme el registro.</p>
+
+      <div class="mt-5">
+        {% include 'components/note.html' with title='Registro inmutable' message='Una vez guardada, la acción no puede modificarse. Solo se puede agregar una observación adicional con aprobación del coordinador.' variant='light' %}
       </div>
 
       <div class="mt-6 space-y-5">
+
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-300">
-            Tipo de acción <span class="text-yellow-300">*</span>
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">
+            Tipo de acción <span class="text-red-500">*</span>
           </label>
           <select id="action-type"
-                  class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   onchange="toggleAttendanceFields()">
             <option value="">Seleccione un tipo</option>
             <option value="document">Entrega de documento</option>
@@ -48,45 +54,45 @@
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-300">
-            Nota <span class="text-yellow-300">*</span>
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">
+            Nota <span class="text-red-500">*</span>
           </label>
           <input id="grade" type="number" min="0.0" max="5.0" step="0.1"
                  placeholder="0.0 – 5.0"
-                 class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none">
+                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-300">Observación (opcional)</label>
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">Observación (opcional)</label>
           <textarea id="observation" rows="3" placeholder="Comentario del profesor..."
-                    class="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"></textarea>
+                    class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
         </div>
 
-        <div id="attendance-fields" class="hidden space-y-4 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
-          <p class="text-xs font-semibold uppercase tracking-widest text-indigo-200">Datos de asistencia a cita</p>
+        <div id="attendance-fields" class="hidden space-y-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-widest text-indigo-600">Datos de asistencia a cita</p>
 
           <div class="flex flex-wrap items-center gap-4">
-            <span class="text-sm text-gray-300">¿El estudiante asistió?</span>
+            <span class="text-sm text-gray-700">¿El estudiante asistió?</span>
             <label class="flex cursor-pointer items-center gap-2">
               <input type="radio" name="attended" value="true" class="text-indigo-500">
-              <span class="text-sm text-white">Sí</span>
+              <span class="text-sm text-gray-900">Sí</span>
             </label>
             <label class="flex cursor-pointer items-center gap-2">
               <input type="radio" name="attended" value="false" class="text-indigo-500">
-              <span class="text-sm text-white">No</span>
+              <span class="text-sm text-gray-900">No</span>
             </label>
           </div>
 
           <div>
-            <label class="mb-2 block text-sm font-medium text-gray-300">Hora de llegada</label>
+            <label class="mb-1.5 block text-sm font-semibold text-gray-700">Hora de llegada</label>
             <input id="arrival-time" type="time"
-                   class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none">
+                   class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
           </div>
 
           {% include 'components/checkbox.html' with name='document_delivered' label='El estudiante entregó el documento en la cita' %}
         </div>
 
-        <div id="error-msg" class="mb-4 hidden rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"></div>
+        <div id="error-msg" class="mb-4 hidden rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600"></div>
 
         <div class="mt-6 flex justify-end gap-3">
           <a href="#" onclick="history.back(); return false;">
@@ -99,30 +105,31 @@
       </div>
     </section>
 
-    <section class="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20">
-      <p class="text-sm uppercase tracking-[0.24em] text-slate-500">Historial</p>
-      <h2 class="mt-2 text-xl font-semibold text-white">Acciones en este caso</h2>
-      <p class="mt-2 text-sm text-slate-400">Acciones académicas registradas en este caso.</p>
+    {# Historial de acciones #}
+    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Historial</p>
+      <h2 class="mt-2 text-xl font-semibold text-gray-900">Acciones en este caso</h2>
+      <p class="mt-1 text-sm text-gray-500">Acciones académicas registradas en este caso.</p>
 
       {% if actions %}
       <div id="actions-list" class="mt-6 space-y-3">
         {% for action in actions %}
-        <div class="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 p-4">
+        <div class="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4">
           <div>
-            <p class="text-sm font-semibold text-white">
+            <p class="text-sm font-semibold text-gray-900">
               {% if action.action_type == 'document' %}Entrega de documento
               {% elif action.action_type == 'followup' %}Seguimiento
               {% elif action.action_type == 'attendance' %}Asistencia a cita
               {% endif %}
             </p>
-            <p class="mt-0.5 text-xs text-slate-500">
+            <p class="mt-0.5 text-xs text-gray-400">
               {{ action.registered_at|date:"d/m/Y H:i" }} · {{ action.registered_by.user.name }}
             </p>
             {% if action.observation %}
-            <p class="mt-1 text-xs text-slate-400">{{ action.observation }}</p>
+            <p class="mt-1 text-xs text-gray-500">{{ action.observation }}</p>
             {% endif %}
           </div>
-          <span class="ml-4 text-2xl font-bold {% if action.grade >= 3.5 %}text-yellow-300{% elif action.grade >= 2.5 %}text-indigo-200{% else %}text-red-400{% endif %}">
+          <span class="ml-4 text-2xl font-bold {% if action.grade >= 3.5 %}text-green-600{% elif action.grade >= 2.5 %}text-yellow-500{% else %}text-red-500{% endif %}">
             {{ action.grade }}
           </span>
         </div>
@@ -134,9 +141,106 @@
       </div>
       {% endif %}
     </section>
+
   </div>
 </div>
 
+{# ============================================================ #}
+{# PTCJMGA-XX: Boton + Modal de sancion academica            #}
+{# ============================================================ #}
+{% if is_professor %}
+
+  {# Sancion academica: nota + boton #}
+{% include 'components/note.html' with title='⚠ Sanción académica' message='Use esta opción solo si el estudiante actual realizó la entrevista de forma deficiente. La acción es inmutable.' variant='light' %}
+
+<div class="flex justify-end">
+  <div onclick="document.getElementById('modal-aplicar-sancion').classList.remove('hidden')" class="cursor-pointer">
+    {% include 'components/button.html' with variant='danger' text='Reasignar como sanción' %}
+  </div>
+</div>
+
+  {# Modal de aplicar sancion (oculto por defecto) #}
+  <div id="modal-aplicar-sancion"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl relative">
+
+      {# Boton cerrar (X) #}
+      <button type="button"
+              onclick="document.getElementById('modal-aplicar-sancion').classList.add('hidden')"
+              class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 text-lg transition-colors">
+        &times;
+      </button>
+
+      {# Icono #}
+      <div class="flex justify-center mb-4 mt-2">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background-color: #EA580C;">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+      </div>
+
+      <h3 class="text-center text-xl font-bold text-gray-900 mb-2">Aplicar sanción académica</h3>
+      <p class="text-center text-sm text-gray-500 mb-5">
+        Esta acción <strong class="text-orange-600">no se puede deshacer</strong>.
+      </p>
+
+      <form method="post" action="{% url 'cases:apply-sanction' case.id %}">
+        {% csrf_token %}
+
+        {# Estudiante a sancionar #}
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">
+            Estudiante a sancionar <span class="text-red-500">*</span>
+          </label>
+          <select name="student_id" required
+                  class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500">
+            <option value="">-- Seleccione --</option>
+            {% for stu in available_students %}
+              <option value="{{ stu.id }}">
+                {{ stu.user.name }}{% if stu.student_code %} ({{ stu.student_code }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# Motivo #}
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">
+            Motivo de la sanción <span class="text-red-500">*</span>
+          </label>
+          <textarea name="reason" required rows="4"
+                    placeholder="Describa el motivo..."
+                    class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"></textarea>
+        </div>
+
+        {# Checkbox confirmacion #}
+        <label class="flex items-start gap-2 mb-5 cursor-pointer">
+          <input type="checkbox" required class="mt-1 h-4 w-4 rounded border-gray-300">
+          <span class="text-xs text-gray-600">
+            Confirmo que esta sanción será registrada de forma inmutable.
+          </span>
+        </label>
+
+       {# Botones - usando componente del equipo #}
+<div class="flex justify-end gap-3">
+  <div onclick="document.getElementById('modal-aplicar-sancion').classList.add('hidden')" class="cursor-pointer">
+    {% include 'components/button.html' with variant='danger' text='Cancelar' %}
+  </div>
+  {% include 'components/button.html' with variant='accent' text='Aplicar sanción' type='submit' %}
+</div>
+
+      </form>
+    </div>
+  </div>
+
+{% endif %}
+
+{# Modal de feedback success/error (despues de aplicar) #}
+{% if sancion_modal %}
+  {% include 'components/modal.html' with tipo=sancion_modal.tipo mensaje=sancion_modal.mensaje texto_boton='Entendido' %}
+{% endif %}
 {{ academic_action_config|json_script:"academic-action-config" }}
 <script>
   const academicActionConfig = JSON.parse(
@@ -149,18 +253,13 @@
   function toggleAttendanceFields() {
     const type = document.getElementById('action-type').value;
     const fields = document.getElementById('attendance-fields');
-    if (type === 'attendance') {
-      fields.classList.remove('hidden');
-    } else {
-      fields.classList.add('hidden');
-    }
+    fields.classList.toggle('hidden', type !== 'attendance');
   }
 
   async function submitAction() {
     const actionType  = document.getElementById('action-type').value;
     const grade       = document.getElementById('grade').value;
     const observation = document.getElementById('observation').value;
-    const errorDiv    = document.getElementById('error-msg');
 
     if (!actionType) return showError('Seleccione un tipo de acción.');
     if (!grade)      return showError('Ingrese una nota entre 0.0 y 5.0.');
@@ -201,7 +300,6 @@
         document.getElementById('grade').value = '';
         document.getElementById('observation').value = '';
         document.getElementById('attendance-fields').classList.add('hidden');
-
         appendActionToList(data, actionType, grade, observation);
         fetchNotaParcial();
       } else {
@@ -235,17 +333,16 @@
     }[actionType];
 
     const g = parseFloat(grade);
-    const gradeClass = g >= 3.5 ? 'text-yellow-300' : g >= 2.5 ? 'text-indigo-200' : 'text-red-400';
-
+    const gradeClass = g >= 3.5 ? 'text-green-600' : g >= 2.5 ? 'text-yellow-500' : 'text-red-500';
     const now = new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
 
     const el = document.createElement('div');
-    el.className = 'flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/80 p-4';
+    el.className = 'flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4';
     el.innerHTML = `
       <div>
-        <p class="text-sm font-semibold text-white">${typeLabel}</p>
-        <p class="mt-0.5 text-xs text-slate-500">${now}</p>
-        ${observation ? `<p class="mt-1 text-xs text-slate-400">${observation}</p>` : ''}
+        <p class="text-sm font-semibold text-gray-900">${typeLabel}</p>
+        <p class="mt-0.5 text-xs text-gray-400">${now}</p>
+        ${observation ? `<p class="mt-1 text-xs text-gray-500">${observation}</p>` : ''}
       </div>
       <span class="ml-4 text-2xl font-bold ${gradeClass}">${parseFloat(grade).toFixed(1)}</span>
     `;
@@ -254,22 +351,19 @@
 
   async function fetchNotaParcial() {
     const el = document.getElementById('nota-parcial');
-    el.classList.remove('text-yellow-300', 'text-red-400');
-    el.classList.add('text-indigo-200');
+    el.className = 'text-5xl font-bold text-gray-400';
     el.textContent = '...';
 
     try {
       const response = await fetch(PARTIAL_GRADE_URL);
-      if (!response.ok) throw new Error('Error en la respuesta');
+      if (!response.ok) throw new Error();
       const data = await response.json();
-      el.classList.remove('text-indigo-200');
-      el.classList.add('text-yellow-300');
-      el.textContent = parseFloat(data.partial_grade).toFixed(1);
-    } catch (err) {
-      console.error('Error al obtener nota parcial:', err);
+      const grade = parseFloat(data.partial_grade);
+      el.className = 'text-5xl font-bold ' + (grade >= 3.5 ? 'text-green-600' : grade >= 2.5 ? 'text-yellow-500' : 'text-red-500');
+      el.textContent = grade.toFixed(1);
+    } catch {
+      el.className = 'text-5xl font-bold text-red-500';
       el.textContent = 'Error';
-      el.classList.remove('text-indigo-200', 'text-yellow-300');
-      el.classList.add('text-red-400');
     }
   }
 
@@ -300,3 +394,5 @@
   document.addEventListener('DOMContentLoaded', fetchNotaParcial);
 </script>
 {% endblock dashboard_content %}
+
+

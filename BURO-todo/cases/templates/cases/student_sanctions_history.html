@@ -1,0 +1,122 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+
+{# ── Header con título y datos del estudiante ──────────────────────────── #}
+<div class="mb-7">
+  <a href="{% url 'cases:sanctions-list' %}"
+     class="inline-flex items-center gap-1 text-xs font-semibold mb-3 transition-colors hover:opacity-70"
+     style="color: #5454E9;">
+    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Volver al listado
+  </a>
+
+  <h1 class="text-3xl font-bold tracking-tight" style="color: #1b1d42;">
+    Historial de {{ student.user.name }}
+  </h1>
+  <p class="mt-2 text-sm text-gray-500">
+    {% if student.student_code %}Código: <strong class="text-gray-700">{{ student.student_code }}</strong>{% endif %}
+    {% if student.semester %}<span class="mx-2">|</span>Semestre: <strong class="text-gray-700">{{ student.semester }}°</strong>{% endif %}
+  </p>
+</div>
+
+{# ── Card resumen ──────────────────────────────────────────────────────── #}
+<div class="grid gap-6 mb-6 lg:grid-cols-2">
+
+  {# Total de sanciones #}
+  <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
+      Total de sanciones
+    </p>
+    <p class="text-4xl font-bold {% if sanctions_count > 0 %}text-orange-500{% else %}text-green-500{% endif %}">
+      {{ sanctions_count }}
+    </p>
+    {% if sanctions_count == 0 %}
+      <p class="mt-2 text-xs text-gray-400">Este estudiante no ha recibido sanciones académicas.</p>
+    {% else %}
+      <p class="mt-2 text-xs text-gray-400">
+        {{ sanctions_count }} sancion{{ sanctions_count|pluralize:"es" }} registrada{{ sanctions_count|pluralize }}.
+      </p>
+    {% endif %}
+  </section>
+
+  {# Card informativa #}
+ {# Nota informativa - usa componente del equipo #}
+{% include 'components/note.html' with title='Información:' message='Esta vista es de solo lectura. Los registros de sanción son inmutables conforme a la trazabilidad académica del consultorio jurídico (Ley 1581 de 2012).' variant='light' %}
+
+</div>
+
+{# ── Lista de sanciones o estado vacío ──────────────────────────────────── #}
+<section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-sm font-semibold uppercase tracking-widest text-gray-400">
+      Sanciones registradas
+    </p>
+  </div>
+
+  {% if sanctions_count == 0 %}
+    {# Estado vacío #}
+    <div class="py-12 text-center">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+           style="background-color: #DCFCE7;">
+        <svg class="h-8 w-8" fill="none" stroke="#166534" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="mt-4 text-base font-semibold text-gray-900">Sin sanciones registradas</p>
+      <p class="mt-1 text-sm text-gray-500">Este estudiante mantiene un historial limpio.</p>
+    </div>
+
+  {% else %}
+    {# Lista de sanciones #}
+    <div class="space-y-3">
+      {% for sancion in sanctions %}
+        <div class="rounded-xl border border-orange-200 p-5"
+             style="background-color: #FFF7ED;">
+
+          {# Header de la sanción #}
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+            <div>
+              <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold mb-2"
+                    style="background-color: #FED7AA; color: #9A3412;">
+                ⚠ SANCIÓN #{{ forloop.counter }}
+              </span>
+              <p class="text-sm font-bold text-gray-900">
+                {% if sancion.case.number %}
+                  Caso: {{ sancion.case.number }}
+                {% else %}
+                  Caso ID: {{ sancion.case.id }}
+                {% endif %}
+              </p>
+            </div>
+            <p class="text-xs text-gray-500">
+              {{ sancion.created_at|date:"d/m/Y" }} · {{ sancion.created_at|time:"H:i" }}
+            </p>
+          </div>
+
+          {# Descripción #}
+          <div class="rounded-lg p-3 bg-white border border-orange-100 mb-3">
+            <p class="text-sm text-gray-700 leading-relaxed">{{ sancion.description }}</p>
+          </div>
+
+          {# Footer #}
+          {% if sancion.executed_by %}
+            <p class="text-xs text-gray-500">
+              Aplicada por: <strong class="text-gray-700">{{ sancion.executed_by.name }}</strong>
+            </p>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+
+  {% endif %}
+
+</section>
+
+{% endblock dashboard_content %}
